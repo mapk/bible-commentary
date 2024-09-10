@@ -177,7 +177,20 @@ export function EnhancedBibleComparisonApp() {
     </div>
   );
 
-  const oldTestamentBooks = bibleBooks.slice(0, 39);
+  const torahBooks = bibleBooks.slice(0, 5);
+  const prophetBooks =
+    bibleBooks.length > 0
+      ? [
+          6, 7, 9, 10, 11, 12, 23, 24, 26, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+          37, 38, 39,
+        ]
+          .map((index) => bibleBooks[index - 1])
+          .filter(Boolean)
+      : [];
+  const writingsBooks =
+    bibleBooks.length > 0
+      ? bibleBooks.slice(5, 39).filter((book) => !prophetBooks.includes(book))
+      : [];
   const newTestamentBooks = bibleBooks.slice(39);
 
   const renderChapterView = () => (
@@ -255,16 +268,24 @@ export function EnhancedBibleComparisonApp() {
   const TestamentCard = ({
     title,
     books,
+    className = "",
+    fullHeight = false,
   }: {
     title: string;
     books: { id: string; name: string }[];
+    className?: string;
+    fullHeight?: boolean;
   }) => (
-    <Card className="flex-1">
+    <Card className={`${fullHeight ? "h-full" : ""} ${className}`}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[calc(100vh-300px)] overflow-y-auto pr-4">
+        <div
+          className={`overflow-y-auto pr-4 ${
+            fullHeight ? "h-[calc(100vh-200px)]" : ""
+          }`}
+        >
           {renderBookList(books)}
         </div>
       </CardContent>
@@ -289,9 +310,19 @@ export function EnhancedBibleComparisonApp() {
       </div>
 
       {currentView === "index" && (
-        <div className="flex flex-col md:flex-row gap-8">
-          <TestamentCard title="Old Testament" books={oldTestamentBooks} />
-          <TestamentCard title="New Testament" books={newTestamentBooks} />
+        <div className="flex gap-8">
+          <div className="flex-1 space-y-8">
+            <TestamentCard title="Torah" books={torahBooks} />
+            <TestamentCard title="Prophets" books={prophetBooks} />
+            <TestamentCard title="Writings" books={writingsBooks} />
+          </div>
+          <div className="flex-1">
+            <TestamentCard
+              title="New Testament"
+              books={newTestamentBooks}
+              fullHeight={true}
+            />
+          </div>
         </div>
       )}
 
