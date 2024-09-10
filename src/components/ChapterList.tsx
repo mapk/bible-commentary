@@ -7,9 +7,10 @@ import { fetchChapters } from "@/lib/api";
 
 interface ChapterListProps {
   bookId: string;
+  name: string;
 }
 
-export function ChapterList({ bookId }: ChapterListProps) {
+export function ChapterList({ bookId, name }: ChapterListProps) {
   const [chapters, setChapters] = useState<number[]>([]);
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export function ChapterList({ bookId }: ChapterListProps) {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">{bookId}</h1>
+      <h1 className="text-2xl font-bold mb-4">{name}</h1>
       <div className="grid grid-cols-5 gap-4">
         {chapters.map((chapter) => (
           <Link
