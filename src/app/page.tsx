@@ -1,4 +1,4 @@
-import { EnhancedBibleComparisonApp } from "@/components/enhanced-bible-comparison-app";
+import { EnhancedBibleComparisonApp } from "@/components/EnhancedBibleComparisonApp";
 
 export default function Home() {
   return <EnhancedBibleComparisonApp />;
