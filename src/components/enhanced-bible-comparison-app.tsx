@@ -181,8 +181,8 @@ export function EnhancedBibleComparisonApp() {
   const prophetBooks =
     bibleBooks.length > 0
       ? [
-          6, 7, 9, 10, 11, 12, 23, 24, 26, 28, 29, 30, 31, 32, 33, 34, 35, 36,
-          37, 38, 39,
+          6, 7, 11, 12, 23, 24, 25, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
+          38,
         ]
           .map((index) => bibleBooks[index - 1])
           .filter(Boolean)
@@ -191,7 +191,10 @@ export function EnhancedBibleComparisonApp() {
     bibleBooks.length > 0
       ? bibleBooks.slice(5, 39).filter((book) => !prophetBooks.includes(book))
       : [];
-  const newTestamentBooks = bibleBooks.slice(39);
+  const gospelBooks = bibleBooks.slice(39, 43);
+  const actsBook = bibleBooks.slice(43, 44);
+  const epistlesBooks = bibleBooks.slice(44, 65);
+  const apocalypseBook = bibleBooks.slice(65, 66);
 
   const renderChapterView = () => (
     <div className="space-y-4">
@@ -316,12 +319,11 @@ export function EnhancedBibleComparisonApp() {
             <TestamentCard title="Prophets" books={prophetBooks} />
             <TestamentCard title="Writings" books={writingsBooks} />
           </div>
-          <div className="flex-1">
-            <TestamentCard
-              title="New Testament"
-              books={newTestamentBooks}
-              fullHeight={true}
-            />
+          <div className="flex-1 space-y-8">
+            <TestamentCard title="Gospels" books={gospelBooks} />
+            <TestamentCard title="Acts of the Apostles" books={actsBook} />
+            <TestamentCard title="Epistles" books={epistlesBooks} />
+            <TestamentCard title="Apocalypse" books={apocalypseBook} />
           </div>
         </div>
       )}
