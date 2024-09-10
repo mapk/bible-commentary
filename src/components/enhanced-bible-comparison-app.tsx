@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -45,29 +46,22 @@ export function EnhancedBibleComparisonApp() {
   useEffect(() => {
     fetchBibleBooks();
     if (currentBook && currentChapter) {
-      fetchBibleContent("KJV", currentBook, currentChapter);
+      fetchBibleContent("de4e12af7f28f599-02", currentBook, currentChapter);
       fetchTotalChapters(currentBook);
     }
   }, [currentBook, currentChapter]);
 
   const fetchBibleBooks = async () => {
     try {
-      const headers = {
-        "api-key": API_KEY,
-      };
-      console.log("Request headers:", headers); // Log the headers
-
-      const response = await axios.get(`${API_URL}/bibles/KJV/books`, {
-        headers: headers,
-      });
-      console.log("API response:", response.data); // Log the response
+      const response = await axios.get(
+        `${API_URL}/bibles/de4e12af7f28f599-02/books`,
+        {
+          headers: { "api-key": API_KEY },
+        }
+      );
       setBibleBooks(response.data.data);
     } catch (error) {
       console.error("Error fetching Bible books:", error);
-      if (axios.isAxiosError(error)) {
-        console.error("Response data:", error.response?.data);
-        console.error("Response status:", error.response?.status);
-      }
     }
   };
 
@@ -103,7 +97,7 @@ export function EnhancedBibleComparisonApp() {
   const fetchTotalChapters = async (book: string) => {
     try {
       const response = await axios.get(
-        `${API_URL}/bibles/KJV/books/${book}/chapters`,
+        `${API_URL}/bibles/de4e12af7f28f599-02/books/${book}/chapters`,
         {
           headers: { "api-key": API_KEY },
         }
@@ -116,10 +110,13 @@ export function EnhancedBibleComparisonApp() {
 
   const handleSearch = async () => {
     try {
-      const response = await axios.get(`${API_URL}/bibles/KJV/search`, {
-        headers: { "api-key": API_KEY },
-        params: { query: searchTerm },
-      });
+      const response = await axios.get(
+        `${API_URL}/bibles/de4e12af7f28f599-02/search`,
+        {
+          headers: { "api-key": API_KEY },
+          params: { query: searchTerm },
+        }
+      );
       setSearchResults(response.data.data.verses);
       setCurrentView("search");
     } catch (error) {
@@ -165,22 +162,23 @@ export function EnhancedBibleComparisonApp() {
     }
   };
 
-  const renderBookList = (testament: string) => (
-    <div className="grid grid-cols-2 gap-2">
-      {bibleBooks
-        .filter((book) => book.testament === testament)
-        .map((book) => (
-          <Button
-            key={book.id}
-            variant="ghost"
-            className="justify-start"
-            onClick={() => handleBookSelect(book.name)}
-          >
-            {book.name}
-          </Button>
-        ))}
+  const renderBookList = (books: { id: string; name: string }[]) => (
+    <div className="flex flex-col flex-wrap h-full gap-x-4 overflow-x-auto">
+      {books.map((book) => (
+        <Button
+          key={book.id}
+          variant="secondary"
+          className="justify-start h-auto py-2 mb-4 w-50"
+          onClick={() => handleBookSelect(book.name)}
+        >
+          {book.name}
+        </Button>
+      ))}
     </div>
   );
+
+  const oldTestamentBooks = bibleBooks.slice(0, 39);
+  const newTestamentBooks = bibleBooks.slice(39);
 
   const renderChapterView = () => (
     <div className="space-y-4">
@@ -254,6 +252,25 @@ export function EnhancedBibleComparisonApp() {
     </div>
   );
 
+  const TestamentCard = ({
+    title,
+    books,
+  }: {
+    title: string;
+    books: { id: string; name: string }[];
+  }) => (
+    <Card className="flex-1">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[calc(100vh-300px)] overflow-y-auto pr-4">
+          {renderBookList(books)}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Molokan Commentary</h1>
@@ -272,15 +289,9 @@ export function EnhancedBibleComparisonApp() {
       </div>
 
       {currentView === "index" && (
-        <div className="grid grid-cols-2 gap-8">
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Old Testament</h2>
-            {renderBookList("OT")}
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold mb-4">New Testament</h2>
-            {renderBookList("NT")}
-          </div>
+        <div className="flex flex-col md:flex-row gap-8">
+          <TestamentCard title="Old Testament" books={oldTestamentBooks} />
+          <TestamentCard title="New Testament" books={newTestamentBooks} />
         </div>
       )}
 
