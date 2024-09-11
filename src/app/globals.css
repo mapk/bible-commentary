@@ -49,3 +49,10 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+p .v {
+  color: hsl(var(--muted-foreground));
+  vertical-align: super;
+  margin-right: 4px;
+  font-size: 0.8em;
+}
