@@ -59,9 +59,7 @@ export default async function ChapterPage({
     <div className="max-w-prose mx-auto relative min-h-screen flex flex-col">
       <h1 className="text-3xl font-bold mb-8">
         <span className="text-slate-400 text-base font-normal block">
-          <Link href={`/book/${bookId}`} className="hover:underline">
-            {book?.name || bookId}
-          </Link>
+          <Link href={`/book/${bookId}`}>{book?.name || bookId}</Link>
         </span>
         {!isNaN(chapterNum) && `Chapter ${chapterNumber}`}
       </h1>
