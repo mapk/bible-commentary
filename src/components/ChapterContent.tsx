@@ -32,7 +32,7 @@ export function ChapterContent({
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">
-        {bookName} - Chapter {chapterNumber}
+        {bookName} - xChapter {chapterNumber}
       </h1>
       <Card>
         <CardContent className="p-4">

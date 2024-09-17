@@ -1,9 +1,11 @@
+"use server";
+
 import { fetchBibleBooks, fetchChapterContent, fetchChapters } from "@/lib/api";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { use } from "react";
-
+import Chapter from "@/components/Chapter";
 interface Book {
   id: string;
   name: string;
@@ -18,8 +20,7 @@ function ChapterContent({
   chapterNumber: string;
 }) {
   const content = use(fetchChapterContent(bookId, parseInt(chapterNumber)));
-
-  return <div dangerouslySetInnerHTML={{ __html: content }} />;
+  return <Chapter html={content} />;
 }
 
 export default async function ChapterPage({
