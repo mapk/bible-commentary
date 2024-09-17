@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Header />
-        <main className="container mx-auto mt-4 mb-12 max-w-screen-xl">
+        <main className="container mx-auto p-4 mt-4 mb-12 max-w-screen-xl">
           {children}
         </main>
       </body>
