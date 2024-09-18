@@ -45,10 +45,10 @@ function Verse({
   selected: boolean;
 }) {
   return (
-    <div className="flex flex-col">
-      <div className="text-sm text-gray-500">{number}</div>
-      <div onClick={() => onClick(number, children)}>
-        <span className={selected ? "bg-yellow-200" : undefined}>
+    <div className="flex flex-row gap-x-2">
+      <div className="text-sm text-gray-500 w-0">{number}</div>
+      <div className="pl-4" onClick={() => onClick(number, children)}>
+        <span className={selected ? "bg-yellow-100" : undefined}>
           {children}
         </span>
       </div>
