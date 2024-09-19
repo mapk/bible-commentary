@@ -28,7 +28,7 @@ export function ChapterList({ bookId, name }: ChapterListProps) {
   return (
     <div className="">
       <h1 className="text-3xl font-bold my-8">{name}</h1>
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {chapters.map((chapter) => (
           <Link
             key={chapter}

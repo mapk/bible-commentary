@@ -55,7 +55,7 @@ export function BookList({ books }: BookListProps) {
   );
 
   return (
-    <div className="flex gap-8">
+    <div className="flex flex-col gap-8 md:flex-row">
       <div className="flex-1 space-y-8">
         <TestamentCard title="Torah" books={torahBooks} />
         <TestamentCard title="Prophets" books={prophetBooks} />
