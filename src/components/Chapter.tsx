@@ -1,5 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 function extractBibleVerses(html: string) {
   const parser = new DOMParser();
@@ -59,13 +68,18 @@ function Verse({
 export default function Chapter({ html }: { html: string }) {
   const [verses, setVerses] = useState<{ number: number; verse: string }[]>([]);
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false); // State to control Sheet visibility
+
   useEffect(() => {
     const verses = extractBibleVerses(html);
     setVerses(verses);
   }, [html]);
+
   const onClick = (number: number) => {
     setSelectedVerse(number);
+    setIsSheetOpen(true); // Open the Sheet on verse click
   };
+
   return (
     <div className="flex flex-col gap-2">
       {verses.map((verse) => (
@@ -78,6 +92,20 @@ export default function Chapter({ html }: { html: string }) {
           {verse.verse}
         </Verse>
       ))}
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent side="right">
+          <SheetHeader className="mb-4">
+            <SheetTitle>Commentary</SheetTitle>
+          </SheetHeader>
+          <Card className="pt-6">
+            <CardContent>
+              {selectedVerse !== null && (
+                <p>{verses.find((v) => v.number === selectedVerse)?.verse}</p>
+              )}
+            </CardContent>
+          </Card>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
