@@ -76,8 +76,14 @@ export default function Chapter({ html }: { html: string }) {
   }, [html]);
 
   const onClick = (number: number) => {
+    // Removed 'verse' parameter
     setSelectedVerse(number);
     setIsSheetOpen(true); // Open the Sheet on verse click
+  };
+
+  const handleSheetClose = () => {
+    setIsSheetOpen(false); // Close the Sheet
+    setSelectedVerse(null); // Deselect the verse
   };
 
   return (
@@ -92,16 +98,44 @@ export default function Chapter({ html }: { html: string }) {
           {verse.verse}
         </Verse>
       ))}
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right">
+      <Sheet open={isSheetOpen} onOpenChange={handleSheetClose}>
+        <SheetContent side="right" className="flex flex-col gap-4">
           <SheetHeader className="mb-4">
             <SheetTitle>Commentary</SheetTitle>
           </SheetHeader>
-          <Card className="pt-6">
+          {/* <Card className="pt-6">
             <CardContent>
               {selectedVerse !== null && (
                 <p>{verses.find((v) => v.number === selectedVerse)?.verse}</p>
               )}
+            </CardContent>
+          </Card> */}
+          <Card className="text-slate-500">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base text-slate-900">
+                Maxim Gavrilovich Rudometkin
+                <br />
+                Book 1, Article 12, Verse 2
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="font-light">
+                God the Father together with His holy omnipotent Word had
+                created this on the first day.
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="text-slate-500">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base text-slate-900">
+                Mark Markeich Uraine
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="font-light">
+                In order for God to create space and time for not-God, He had to
+                reduce Himself.
+              </p>
             </CardContent>
           </Card>
         </SheetContent>
