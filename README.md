@@ -1,3 +1,10 @@
+## Bible Commentary
+
+<img width="1549" alt="commentary" src="https://github.com/user-attachments/assets/8b0f4d8f-bf28-442e-a330-b7f8150a1476" />
+
+The web app syncs my own commentary with specific verses throughout the Bible. In later versions it will include commentary from community eldership.
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
