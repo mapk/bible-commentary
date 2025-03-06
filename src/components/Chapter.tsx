@@ -129,8 +129,15 @@ export default function Chapter({ html }: { html: string }) {
             </CardHeader>
             <CardContent>
               <p className="font-light">
-                In order for God to create space and time for not-God, He had to
-                reduce Himself.
+                In the beginning, God was everything–not simply a spirit
+                floating around in emptiness–everything. A floating, flying,
+                hovering spirit, requires time by which to move, and space
+                through which movement can exist. No, YHVH was everything. There
+                was no time, no space. And so in order for Him to create the
+                things that are not God, time and space needed to exist and God,
+                who was everything, had to reduce Himself to make room for
+                not-God. He had to diminish Himself to give existence to
+                creation.
               </p>
             </CardContent>
           </Card>
