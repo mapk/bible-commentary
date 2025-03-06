@@ -111,9 +111,7 @@ export default function Chapter({ html }: { html: string }) {
           <Card className="text-slate-500">
             <CardHeader className="pb-2">
               <CardTitle className="text-base text-slate-900">
-                Maxim Gavrilovich Rudometkin
-                <br />
-                Book 1, Article 12, Verse 2
+                Another commentator
               </CardTitle>
             </CardHeader>
             <CardContent>
