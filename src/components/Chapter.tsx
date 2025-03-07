@@ -130,7 +130,7 @@ export default function Chapter({
           <Card className="pt-6 bg-slate-100">
             <CardContent>
               {selectedVerse !== null && (
-                <p className="text-sm text-slate-600">
+                <p className="font-serif italic text-sm text-slate-600">
                   {verses.find((v) => v.number === selectedVerse)?.verse}
                 </p>
               )}
@@ -144,7 +144,7 @@ export default function Chapter({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm">{comment.commentary_text}</p>
+                <p className="text-sm/5">{comment.commentary_text}</p>
               </CardContent>
             </Card>
           ))}
