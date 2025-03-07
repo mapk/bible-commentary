@@ -42,24 +42,25 @@ function extractBibleVerses(html: string) {
 }
 
 function Verse({
-  number,
   children,
+  number,
   onClick,
   selected,
 }: {
+  children: React.ReactNode;
   number: number;
-  children: string;
-  onClick: (number: number, verse: string) => void;
+  onClick: (number: number) => void;
   selected: boolean;
 }) {
   return (
-    <div className="flex flex-row gap-x-2">
-      <div className="text-sm text-gray-500 w-0">{number}</div>
-      <div className="pl-4" onClick={() => onClick(number, children)}>
-        <span className={selected ? "bg-yellow-100" : undefined}>
-          {children}
-        </span>
-      </div>
+    <div
+      onClick={() => onClick(number)}
+      className={`p-2 rounded-lg transition-colors ${
+        selected ? "bg-slate-100" : "hover:bg-slate-50"
+      } cursor-pointer`}
+    >
+      <sup className="mr-2 text-slate-500">{number}</sup>
+      {children}
     </div>
   );
 }
@@ -110,8 +111,18 @@ export default function Chapter({
     setCommentary([]);
   };
 
+  // Add this function to format the book ID for display
+  const formatBookName = (bookId: string) => {
+    return bookId
+      .split(".")[0]
+      .replace(/-/g, " ")
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col">
       {verses.map((verse) => (
         <Verse
           key={verse.number}
@@ -127,24 +138,35 @@ export default function Chapter({
           <SheetHeader className="mb-4">
             <SheetTitle>Commentary</SheetTitle>
           </SheetHeader>
-          <Card className="pt-6 bg-slate-100">
+          <Card className="border-none drop-shadow-none pt-6 bg-slate-100">
+            <CardTitle className="text-base text-slate-900 px-6">
+              {selectedVerse !== null && (
+                <span className="font-semibold">
+                  {formatBookName(bookId)}{" "}
+                  {window.location.pathname.match(/chapter\/(\d+)/)?.[1]}:
+                  {selectedVerse}
+                </span>
+              )}
+            </CardTitle>
             <CardContent>
               {selectedVerse !== null && (
-                <p className="font-serif italic text-sm text-slate-600">
+                <p className="text-sm text-slate-600">
                   {verses.find((v) => v.number === selectedVerse)?.verse}
                 </p>
               )}
             </CardContent>
           </Card>
           {commentary.map((comment) => (
-            <Card key={comment.id} className=" text-slate-500">
+            <Card key={comment.id} className=" text-slate-600">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base text-slate-900">
                   {comment.commentary_author}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm/5">{comment.commentary_text}</p>
+                <p className="text-sm/5 whitespace-pre-wrap">
+                  {comment.commentary_text}
+                </p>
               </CardContent>
             </Card>
           ))}
