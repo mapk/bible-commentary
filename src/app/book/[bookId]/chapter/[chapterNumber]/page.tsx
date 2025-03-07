@@ -20,7 +20,7 @@ function ChapterContent({
   chapterNumber: string;
 }) {
   const content = use(fetchChapterContent(bookId, parseInt(chapterNumber)));
-  return <Chapter html={content} />;
+  return <Chapter html={content} bookId={bookId} />;
 }
 
 export default async function ChapterPage({

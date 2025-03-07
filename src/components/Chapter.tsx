@@ -7,6 +7,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { fetchCommentary } from "@/lib/api";
 
 function extractBibleVerses(html: string) {
   const parser = new DOMParser();
@@ -63,25 +64,50 @@ function Verse({
   );
 }
 
-export default function Chapter({ html }: { html: string }) {
+interface Commentary {
+  id: number;
+  book: string;
+  chapter: number;
+  verse: number;
+  commentary_author: string;
+  commentary_text: string;
+  created_at: string;
+}
+
+export default function Chapter({
+  html,
+  bookId,
+}: {
+  html: string;
+  bookId: string;
+}) {
   const [verses, setVerses] = useState<{ number: number; verse: string }[]>([]);
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
-  const [isSheetOpen, setIsSheetOpen] = useState(false); // State to control Sheet visibility
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [commentary, setCommentary] = useState<Commentary[]>([]);
 
   useEffect(() => {
     const verses = extractBibleVerses(html);
     setVerses(verses);
   }, [html]);
 
-  const onClick = (number: number) => {
-    // Removed 'verse' parameter
+  const onClick = async (number: number) => {
     setSelectedVerse(number);
-    setIsSheetOpen(true); // Open the Sheet on verse click
+    setIsSheetOpen(true);
+
+    // Get the chapter number from the URL or pass it as a prop
+    const chapterMatch = window.location.pathname.match(/chapter\/(\d+)/);
+    const chapter = chapterMatch ? parseInt(chapterMatch[1]) : 1;
+
+    // Fetch commentary for this verse
+    const commentaryData = await fetchCommentary(bookId, chapter, number);
+    setCommentary(commentaryData);
   };
 
   const handleSheetClose = () => {
-    setIsSheetOpen(false); // Close the Sheet
-    setSelectedVerse(null); // Deselect the verse
+    setIsSheetOpen(false);
+    setSelectedVerse(null);
+    setCommentary([]);
   };
 
   return (
@@ -101,46 +127,32 @@ export default function Chapter({ html }: { html: string }) {
           <SheetHeader className="mb-4">
             <SheetTitle>Commentary</SheetTitle>
           </SheetHeader>
-          {/* <Card className="pt-6">
+          <Card className="pt-6 bg-slate-100">
             <CardContent>
               {selectedVerse !== null && (
-                <p>{verses.find((v) => v.number === selectedVerse)?.verse}</p>
+                <p className="text-sm text-slate-600">
+                  {verses.find((v) => v.number === selectedVerse)?.verse}
+                </p>
               )}
             </CardContent>
-          </Card> */}
-          <Card className="text-slate-500">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base text-slate-900">
-                Another commentator
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="font-light">
-                God the Father together with His holy omnipotent Word had
-                created this on the first day.
-              </p>
-            </CardContent>
           </Card>
-          <Card className="text-slate-500">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base text-slate-900">
-                Mark Markeich Uraine
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="font-light">
-                In the beginning, God was everything–not simply a spirit
-                floating around in emptiness–everything. A floating, flying,
-                hovering spirit, requires time by which to move, and space
-                through which movement can exist. No, YHVH was everything. There
-                was no time, no space. And so in order for Him to create the
-                things that are not God, time and space needed to exist and God,
-                who was everything, had to reduce Himself to make room for
-                not-God. He had to diminish Himself to give existence to
-                creation.
-              </p>
-            </CardContent>
-          </Card>
+          {commentary.map((comment) => (
+            <Card key={comment.id} className=" text-slate-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base text-slate-900">
+                  {comment.commentary_author}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm">{comment.commentary_text}</p>
+              </CardContent>
+            </Card>
+          ))}
+          {commentary.length === 0 && (
+            <p className="text-center text-slate-500">
+              No commentary available for this verse.
+            </p>
+          )}
         </SheetContent>
       </Sheet>
     </div>

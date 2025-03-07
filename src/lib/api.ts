@@ -1,4 +1,5 @@
 import axios from "axios";
+import { supabase } from "./supabase";
 
 const API_KEY = "d5b6cacdee5ceb38161e26a0777dc4d1";
 const API_URL = "https://api.scripture.api.bible/v1";
@@ -55,6 +56,31 @@ export async function fetchSearchResults(query: string) {
     return response.data.data.verses;
   } catch (error) {
     console.error("Error fetching search results:", error);
+    return [];
+  }
+}
+
+export async function fetchCommentary(
+  book: string,
+  chapter: number,
+  verse: number
+) {
+  try {
+    const { data, error } = await supabase
+      .from("commentary")
+      .select("*")
+      .eq("book", book)
+      .eq("chapter", chapter)
+      .eq("verse", verse);
+
+    if (error) {
+      console.error("Error fetching commentary:", error);
+      return [];
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching commentary:", error);
     return [];
   }
 }
