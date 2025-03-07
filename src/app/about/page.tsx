@@ -1,15 +1,15 @@
 export default function About() {
   return (
-    <div class="max-w-prose mx-auto relative min-h-screen flex flex-col">
+    <div className="max-w-prose mx-auto relative min-h-screen flex flex-col">
       <h1 className="text-3xl font-bold my-8">About this site</h1>
-      <p class="mb-4">
+      <p className="mb-4">
         This project is a place for thoughtful commentary on the Bible, rooted
         in the wisdom of our community’s eldership. It began with my own
         reflections, and I hope will grow into something much larger: a shared
         resource where the insights of our elders are collected, preserved, and
         made accessible to all.
       </p>
-      <p class="mb-4">
+      <p className="mb-4">
         As a continual learner, I’ve long been fascinated by how the language of
         the Old Testament reveals the heart of its writers. From the vivid
         imagery of the Psalms to the subtle word choices in the Torah, I’ve

@@ -20,7 +20,7 @@ export default function Header() {
             />
           </div>
           <Button variant="outline" asChild>
-            <Link href="/docs">Docs</Link>
+            <Link href="/guide">Guide</Link>
           </Button>
           <Button variant="outline" asChild>
             <Link href="/about">About</Link>
