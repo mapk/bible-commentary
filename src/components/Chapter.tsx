@@ -138,7 +138,7 @@ export default function Chapter({
           <SheetHeader className="mb-4">
             <SheetTitle>Commentary</SheetTitle>
           </SheetHeader>
-          <Card className="border-none drop-shadow-none pt-6 bg-slate-100">
+          <Card className="border-none shadow-none pt-6 bg-slate-100">
             <CardTitle className="text-base text-slate-900 px-6">
               {selectedVerse !== null && (
                 <span className="font-semibold">
