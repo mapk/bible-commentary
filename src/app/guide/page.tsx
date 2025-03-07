@@ -7,7 +7,7 @@ export default function Guide() {
           <h2 className="text-2xl font-semibold mb-4">How to Use This Site</h2>
           <p className="mb-4">
             This Bible commentary site is designed to be simple and intuitive to
-            use. Here's how to get started:
+            use. How to get started:
           </p>
           <ul className="list-disc pl-6 space-y-2">
             <li>Browse books of the Bible from the homepage</li>
