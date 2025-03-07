@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
 
 export default function Header() {
   return (
@@ -11,14 +9,6 @@ export default function Header() {
           Bible Commentary
         </Link>
         <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="pl-8 w-[200px] md:w-[300px]"
-            />
-          </div>
           <Button variant="outline" asChild>
             <Link href="/guide">Guide</Link>
           </Button>
