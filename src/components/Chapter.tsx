@@ -138,43 +138,45 @@ export default function Chapter({
           <SheetHeader className="mb-4">
             <SheetTitle>Commentary</SheetTitle>
           </SheetHeader>
-          <Card className="border-none shadow-none pt-6 bg-slate-100">
-            <CardTitle className="text-base text-slate-900 px-6">
-              {selectedVerse !== null && (
-                <span className="font-semibold">
-                  {formatBookName(bookId)}{" "}
-                  {window.location.pathname.match(/chapter\/(\d+)/)?.[1]}:
-                  {selectedVerse}
-                </span>
-              )}
-            </CardTitle>
-            <CardContent>
-              {selectedVerse !== null && (
-                <p className="text-sm text-slate-600">
-                  {verses.find((v) => v.number === selectedVerse)?.verse}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-          {commentary.map((comment) => (
-            <Card key={comment.id} className=" text-slate-600">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base text-slate-900">
-                  {comment.commentary_author}
-                </CardTitle>
-              </CardHeader>
+          <div className="flex flex-col gap-4 overflow-y-auto">
+            <Card className="border-none shadow-none pt-6 bg-slate-100">
+              <CardTitle className="text-base text-slate-900 px-6">
+                {selectedVerse !== null && (
+                  <span className="font-semibold">
+                    {formatBookName(bookId)}{" "}
+                    {window.location.pathname.match(/chapter\/(\d+)/)?.[1]}:
+                    {selectedVerse}
+                  </span>
+                )}
+              </CardTitle>
               <CardContent>
-                <p className="text-sm/5 whitespace-pre-wrap">
-                  {comment.commentary_text}
-                </p>
+                {selectedVerse !== null && (
+                  <p className="text-sm text-slate-600">
+                    {verses.find((v) => v.number === selectedVerse)?.verse}
+                  </p>
+                )}
               </CardContent>
             </Card>
-          ))}
-          {commentary.length === 0 && (
-            <p className="text-center text-slate-500">
-              No commentary available for this verse.
-            </p>
-          )}
+            {commentary.map((comment) => (
+              <Card key={comment.id} className=" text-slate-600">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base text-slate-900">
+                    {comment.commentary_author}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm/5 whitespace-pre-wrap">
+                    {comment.commentary_text}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+            {commentary.length === 0 && (
+              <p className="text-center text-slate-500">
+                No commentary available for this verse.
+              </p>
+            )}
+          </div>
         </SheetContent>
       </Sheet>
     </div>
