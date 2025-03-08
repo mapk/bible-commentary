@@ -69,11 +69,24 @@ interface Commentary {
   id: number;
   book: string;
   chapter: number;
-  verse: number;
+  verse_range: string;
   commentary_author: string;
   commentary_text: string;
   created_at: string;
 }
+
+const isVerseInRange = (verse: number, range: string): boolean => {
+  if (!range) return false;
+
+  // Handle single verse case
+  if (!range.includes("-")) {
+    return verse === parseInt(range);
+  }
+
+  // Handle verse range
+  const [start, end] = range.split("-").map((num) => parseInt(num));
+  return verse >= start && verse <= end;
+};
 
 export default function Chapter({
   html,
@@ -96,13 +109,15 @@ export default function Chapter({
     setSelectedVerse(number);
     setIsSheetOpen(true);
 
-    // Get the chapter number from the URL or pass it as a prop
     const chapterMatch = window.location.pathname.match(/chapter\/(\d+)/);
     const chapter = chapterMatch ? parseInt(chapterMatch[1]) : 1;
 
-    // Fetch commentary for this verse
-    const commentaryData = await fetchCommentary(bookId, chapter, number);
-    setCommentary(commentaryData);
+    const commentaryData = await fetchCommentary(bookId, chapter);
+    // Filter commentary to only show entries where the verse is in range
+    const relevantCommentary = commentaryData.filter((comment) =>
+      isVerseInRange(number, comment.verse_range)
+    );
+    setCommentary(relevantCommentary);
   };
 
   const handleSheetClose = () => {
@@ -158,10 +173,16 @@ export default function Chapter({
               </CardContent>
             </Card>
             {commentary.map((comment) => (
-              <Card key={comment.id} className=" text-slate-600">
+              <Card key={comment.id} className="text-slate-600">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base text-slate-900">
                     {comment.commentary_author}
+                    {comment.verse_range &&
+                      comment.verse_range !== selectedVerse?.toString() && (
+                        <span className="text-sm font-normal text-slate-500 ml-2">
+                          (verses {comment.verse_range})
+                        </span>
+                      )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
