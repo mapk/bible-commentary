@@ -60,18 +60,13 @@ export async function fetchSearchResults(query: string) {
   }
 }
 
-export async function fetchCommentary(
-  book: string,
-  chapter: number,
-  verse: number
-) {
+export async function fetchCommentary(book: string, chapter: number) {
   try {
     const { data, error } = await supabase
       .from("commentary")
       .select("*")
       .eq("book", book)
-      .eq("chapter", chapter)
-      .eq("verse", verse);
+      .eq("chapter", chapter);
 
     if (error) {
       console.error("Error fetching commentary:", error);
