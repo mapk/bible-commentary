@@ -5,9 +5,11 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { fetchCommentary } from "@/lib/api";
+import { CommentaryForm } from "@/components/CommentaryForm";
 
 function extractBibleVerses(html: string) {
   const parser = new DOMParser();
@@ -88,6 +90,13 @@ const isVerseInRange = (verse: number, range: string): boolean => {
   return verse >= start && verse <= end;
 };
 
+// Add this helper function outside the component
+const getChapterFromPath = (path: string | null) => {
+  if (!path) return 1;
+  const match = path?.match(/chapter\/(\d+)/);
+  return match ? parseInt(match[1]) : 1;
+};
+
 export default function Chapter({
   html,
   bookId,
@@ -99,6 +108,12 @@ export default function Chapter({
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [commentary, setCommentary] = useState<Commentary[]>([]);
+  const [currentChapter, setCurrentChapter] = useState(1);
+
+  // Add this useEffect to set the chapter number after mounting
+  useEffect(() => {
+    setCurrentChapter(getChapterFromPath(window.location.pathname));
+  }, []);
 
   useEffect(() => {
     const verses = extractBibleVerses(html);
@@ -109,11 +124,7 @@ export default function Chapter({
     setSelectedVerse(number);
     setIsSheetOpen(true);
 
-    const chapterMatch = window.location.pathname.match(/chapter\/(\d+)/);
-    const chapter = chapterMatch ? parseInt(chapterMatch[1]) : 1;
-
-    const commentaryData = await fetchCommentary(bookId, chapter);
-    // Filter commentary to only show entries where the verse is in range
+    const commentaryData = await fetchCommentary(bookId, currentChapter);
     const relevantCommentary = commentaryData.filter((comment) =>
       isVerseInRange(number, comment.verse_range)
     );
@@ -150,17 +161,19 @@ export default function Chapter({
       ))}
       <Sheet open={isSheetOpen} onOpenChange={handleSheetClose}>
         <SheetContent side="right" className="flex flex-col gap-4">
-          <SheetHeader className="mb-4">
+          <SheetHeader className="mb-4 sticky top-0 z-10">
             <SheetTitle>Commentary</SheetTitle>
+            <SheetDescription className="hidden">
+              Commentary on specific Bible verses.
+            </SheetDescription>
           </SheetHeader>
           <div className="flex flex-col gap-4 overflow-y-auto">
             <Card className="border-none shadow-none pt-6 bg-slate-100">
               <CardTitle className="text-base text-slate-900 px-6">
                 {selectedVerse !== null && (
                   <span className="font-semibold">
-                    {formatBookName(bookId)}{" "}
-                    {window.location.pathname.match(/chapter\/(\d+)/)?.[1]}:
-                    {selectedVerse}
+                    {formatBookName(bookId)} {currentChapter}
+                    {selectedVerse ? `:${selectedVerse}` : ""}
                   </span>
                 )}
               </CardTitle>
@@ -170,6 +183,32 @@ export default function Chapter({
                     {verses.find((v) => v.number === selectedVerse)?.verse}
                   </p>
                 )}
+              </CardContent>
+            </Card>
+            <Card className="border-none shadow-none pt-6 bg-slate-100">
+              <CardContent>
+                <CommentaryForm
+                  currentBook={bookId}
+                  currentChapter={currentChapter}
+                  currentVerse={selectedVerse || 1}
+                  onCommentaryAdded={() => {
+                    const fetchLatestCommentary = async () => {
+                      const commentaryData = await fetchCommentary(
+                        bookId,
+                        currentChapter
+                      );
+                      const relevantCommentary = commentaryData.filter(
+                        (comment) =>
+                          isVerseInRange(
+                            selectedVerse || 1,
+                            comment.verse_range
+                          )
+                      );
+                      setCommentary(relevantCommentary);
+                    };
+                    fetchLatestCommentary();
+                  }}
+                />
               </CardContent>
             </Card>
             {commentary.map((comment) => (

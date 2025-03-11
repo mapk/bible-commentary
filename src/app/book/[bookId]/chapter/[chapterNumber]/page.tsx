@@ -34,7 +34,7 @@ export default async function ChapterPage({
   const book = books[currentBookIndex];
   const chapterNum = parseInt(chapterNumber);
   const chapters = await fetchChapters(bookId);
-  const totalChapters = chapters.length - 1;
+  const totalChapters = chapters.length;
 
   let prevLink: string | null = null;
   let nextLink: string | null = null;
@@ -53,7 +53,7 @@ export default async function ChapterPage({
   } else if (currentBookIndex > 0) {
     const prevBook = books[currentBookIndex - 1];
     const prevBookChapters = await fetchChapters(prevBook.id);
-    prevLink = `/book/${prevBook.id}/chapter/${prevBookChapters.length - 1}`;
+    prevLink = `/book/${prevBook.id}/chapter/${prevBookChapters.length}`;
   }
 
   return (

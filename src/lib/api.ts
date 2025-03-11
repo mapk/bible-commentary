@@ -24,9 +24,17 @@ export async function fetchChapters(bookId: string): Promise<number[]> {
     const response = await api.get(
       `/bibles/de4e12af7f28f599-02/books/${bookId}/chapters`
     );
-    return response.data.data.map((chapter: { number: string }) =>
-      parseInt(chapter.number)
-    );
+
+    // Skip the first item if it's an intro chapter
+    const chaptersData =
+      response.data.data[0]?.number === "intro"
+        ? response.data.data.slice(1)
+        : response.data.data;
+
+    return chaptersData
+      .map((chapter: { number: string }) => parseInt(chapter.number))
+      .filter((num: number) => !isNaN(num))
+      .sort((a: number, b: number) => a - b);
   } catch (error) {
     console.error("Error fetching chapters:", error);
     return [];
