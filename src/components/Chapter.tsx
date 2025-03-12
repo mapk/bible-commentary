@@ -185,32 +185,26 @@ export default function Chapter({
                 )}
               </CardContent>
             </Card>
-            <Card className="border-none shadow-none pt-6 bg-slate-100">
-              <CardContent>
-                <CommentaryForm
-                  currentBook={bookId}
-                  currentChapter={currentChapter}
-                  currentVerse={selectedVerse || 1}
-                  onCommentaryAdded={() => {
-                    const fetchLatestCommentary = async () => {
-                      const commentaryData = await fetchCommentary(
-                        bookId,
-                        currentChapter
-                      );
-                      const relevantCommentary = commentaryData.filter(
-                        (comment) =>
-                          isVerseInRange(
-                            selectedVerse || 1,
-                            comment.verse_range
-                          )
-                      );
-                      setCommentary(relevantCommentary);
-                    };
-                    fetchLatestCommentary();
-                  }}
-                />
-              </CardContent>
-            </Card>
+
+            <CommentaryForm
+              currentBook={bookId}
+              currentChapter={currentChapter}
+              currentVerse={selectedVerse || 1}
+              onCommentaryAdded={() => {
+                const fetchLatestCommentary = async () => {
+                  const commentaryData = await fetchCommentary(
+                    bookId,
+                    currentChapter
+                  );
+                  const relevantCommentary = commentaryData.filter((comment) =>
+                    isVerseInRange(selectedVerse || 1, comment.verse_range)
+                  );
+                  setCommentary(relevantCommentary);
+                };
+                fetchLatestCommentary();
+              }}
+            />
+
             {commentary.map((comment) => (
               <Card key={comment.id} className="text-slate-600">
                 <CardHeader className="pb-2">

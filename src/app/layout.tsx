@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import Header from "../components/Header";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 export const metadata: Metadata = {
   title: "Bible Commentary",
@@ -18,10 +19,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Header />
-        <main className="container mx-auto p-4 mt-4 mb-12 max-w-screen-xl">
-          {children}
-        </main>
+        <AuthProvider>
+          <Header />
+          <main className="container mx-auto p-4 mt-4 mb-12 max-w-screen-xl">
+            {children}
+          </main>
+        </AuthProvider>
       </body>
     </html>
   );
