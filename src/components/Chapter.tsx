@@ -48,18 +48,20 @@ function Verse({
   number,
   onClick,
   selected,
+  hasCommentary,
 }: {
   children: React.ReactNode;
   number: number;
   onClick: (number: number) => void;
   selected: boolean;
+  hasCommentary: boolean;
 }) {
   return (
     <div
       onClick={() => onClick(number)}
       className={`p-2 rounded-lg transition-colors ${
-        selected ? "bg-slate-100" : "hover:bg-slate-50"
-      } cursor-pointer`}
+        selected ? "bg-slate-100" : "hover:bg-slate-50 hover:text-slate-900"
+      } cursor-pointer ${hasCommentary ? "text-slate-900" : "text-slate-500"}`}
     >
       <sup className="mr-2 text-slate-500">{number}</sup>
       {children}
@@ -109,16 +111,48 @@ export default function Chapter({
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [commentary, setCommentary] = useState<Commentary[]>([]);
   const [currentChapter, setCurrentChapter] = useState(1);
+  const [versesWithCommentary, setVersesWithCommentary] = useState<Set<number>>(
+    new Set()
+  );
 
-  // Add this useEffect to set the chapter number after mounting
   useEffect(() => {
-    setCurrentChapter(getChapterFromPath(window.location.pathname));
+    const path = window.location.pathname;
+    const chapterNum = getChapterFromPath(path);
+    setCurrentChapter(chapterNum);
   }, []);
 
   useEffect(() => {
     const verses = extractBibleVerses(html);
     setVerses(verses);
-  }, [html]);
+
+    // Reset verses with commentary when html changes
+    setVersesWithCommentary(new Set());
+
+    // Load commentary for the new chapter
+    const loadCommentary = async () => {
+      const path = window.location.pathname;
+      const chapterNum = getChapterFromPath(path);
+      const allCommentary = await fetchCommentary(bookId, chapterNum);
+      const versesWithComments = new Set<number>();
+
+      allCommentary.forEach((comment) => {
+        if (!comment.verse_range) return;
+
+        if (comment.verse_range.includes("-")) {
+          const [start, end] = comment.verse_range.split("-").map(Number);
+          for (let verse = start; verse <= end; verse++) {
+            versesWithComments.add(verse);
+          }
+        } else {
+          versesWithComments.add(Number(comment.verse_range));
+        }
+      });
+
+      setVersesWithCommentary(versesWithComments);
+    };
+
+    loadCommentary();
+  }, [html, bookId]); // Add html and bookId as dependencies
 
   const onClick = async (number: number) => {
     setSelectedVerse(number);
@@ -155,6 +189,7 @@ export default function Chapter({
           number={verse.number}
           onClick={onClick}
           selected={verse.number === selectedVerse}
+          hasCommentary={versesWithCommentary.has(verse.number)}
         >
           {verse.verse}
         </Verse>
