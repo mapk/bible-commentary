@@ -23,9 +23,6 @@ export default function Header() {
         </Link>
         <div className="flex items-center space-x-4">
           <Button variant="outline" asChild>
-            <Link href="/guide">Guide</Link>
-          </Button>
-          <Button variant="outline" asChild>
             <Link href="/about">About</Link>
           </Button>
           {user ? (
