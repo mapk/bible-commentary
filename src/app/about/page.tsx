@@ -15,9 +15,19 @@ export default function About() {
             <li>Click on any verse to see related commentary</li>
           </ol>
           <p className="mb-4">
+            The Bible presented here is the King James Version.
+          </p>
+          <h1 className="text-xl font-semibold mb-4">Future iterations</h1>
+          <p className="mb-4">
+            Future iterations of this project will include multiple Bible
+            versions, search functionality, commentary indicators, and more
+            commentary from others.
+          </p>
+          <h1 className="text-xl font-semibold mb-4">The project</h1>
+          <p className="mb-4">
             This project and commentary provided comes from trusted sources
             within our community, offering insights and interpretations to help
-            deepen your understanding of the scripture. It is a shared resource
+            deepen your understanding of Scripture. It is a shared resource
             where the insights of our elders are collected, preserved, and made
             accessible to all.
           </p>
