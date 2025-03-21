@@ -17,12 +17,6 @@ export default function About() {
           <p className="mb-4">
             The Bible presented here is the King James Version.
           </p>
-          <h1 className="text-xl font-semibold mb-4">Future iterations</h1>
-          <p className="mb-4">
-            Future iterations of this project will include multiple Bible
-            versions, search functionality, commentary indicators, and more
-            commentary from others.
-          </p>
           <h1 className="text-xl font-semibold mb-4">The project</h1>
           <p className="mb-4">
             This project and commentary provided comes from trusted sources
@@ -43,6 +37,22 @@ export default function About() {
             the nuance of a Hebrew term, the context of a passage, or the
             practical wisdom of an elder, this site is designed to be a resource
             you can turn to again and again.
+          </p>
+          <h1 className="text-xl font-semibold mb-4">Future iterations</h1>
+          <p className="mb-4">
+            Future iterations of this project will include multiple Bible
+            versions, search functionality, commentary indicators, and more
+            commentary from others.
+          </p>
+          <h1 className="text-xl font-semibold mb-4">The stack</h1>
+          <p className="mb-4">
+            This is a <code className="text-sm">NextJS</code> app written with{" "}
+            <code className="text-sm">Cursor</code> using{" "}
+            <code className="text-sm">Shadcn UI</code>,{" "}
+            <code className="text-sm">Tailwind CSS</code>, and{" "}
+            <code className="text-sm">Supabase</code>. It is hosted on{" "}
+            <code className="text-sm">Netlify</code>. The King James Bible is
+            sourced from <code className="text-sm">api.bible API</code>.
           </p>
         </section>
       </div>
