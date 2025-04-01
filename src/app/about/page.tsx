@@ -3,7 +3,7 @@ export default function About() {
     <div className="max-w-prose mx-auto relative min-h-screen flex flex-col">
       <div className="space-y-8">
         <section>
-          <h1 className="text-3xl font-semibold mb-8">About This Site</h1>
+          <h1 className="text-2xl font-semibold mb-8">About This Site</h1>
           <p className="mb-4">
             This Bible commentary site is designed to be simple and intuitive to
             use. Verses with commentary are in black text, verses without are in
