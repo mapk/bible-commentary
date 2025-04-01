@@ -58,7 +58,7 @@ export default async function ChapterPage({
 
   return (
     <div className="max-w-prose mx-auto relative min-h-screen flex flex-col">
-      <h1 className="text-3xl font-bold mb-8">
+      <h1 className="text-2xl font-bold mb-8">
         <span className="text-slate-400 text-base font-normal block">
           <Link href={`/book/${bookId}`}>{book?.name || bookId}</Link>
         </span>
