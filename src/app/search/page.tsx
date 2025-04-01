@@ -82,7 +82,7 @@ export default function SearchPage() {
                 <div className="w-1/4">
                   <Button
                     variant="link"
-                    className="p-0 h-auto text-blue-600"
+                    className="p-0 h-auto text-base text-blue-600"
                     asChild
                   >
                     <Link
