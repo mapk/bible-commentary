@@ -5,14 +5,24 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
 
 export default function Header() {
   const { user } = useAuth();
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.refresh();
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
 
   return (
@@ -22,6 +32,15 @@ export default function Header() {
           Bible Commentary
         </Link>
         <div className="flex items-center space-x-4">
+          <form onSubmit={handleSearch} className="flex items-center space-x-2">
+            <Input
+              type="search"
+              placeholder="Search keywords..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full md:w-[300px]"
+            />
+          </form>
           <Button variant="outline" asChild>
             <Link href="/about">About</Link>
           </Button>
