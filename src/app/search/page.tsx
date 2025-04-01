@@ -2,18 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { fetchSearchResults } from "@/lib/api";
+import { fetchSearchResults, SearchResult } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-
-interface SearchResult {
-  book: string;
-  chapter: number;
-  verse: number;
-  text: string;
-  bookId: string;
-}
 
 export default function SearchPage() {
   const router = useRouter();

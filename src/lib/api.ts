@@ -10,7 +10,7 @@ const api = axios.create({
   headers: { "api-key": API_KEY },
 });
 
-interface SearchResult {
+export interface SearchResult {
   book: string;
   chapter: number;
   verse: number;
