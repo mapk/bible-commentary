@@ -110,7 +110,7 @@ export default function RequestsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-prose mx-auto p-4">
+      <div className="max-w-prose mx-auto">
         <h1 className="text-2xl font-bold mb-4">Loading requests...</h1>
       </div>
     );
@@ -118,7 +118,7 @@ export default function RequestsPage() {
 
   if (error) {
     return (
-      <div className="max-w-prose mx-auto p-4">
+      <div className="max-w-prose mx-auto">
         <h1 className="text-2xl font-bold mb-4">Error</h1>
         <p className="text-red-600">{error}</p>
       </div>
