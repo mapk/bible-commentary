@@ -48,7 +48,7 @@ export default function SearchPage() {
 
   if (loading) {
     return (
-      <div className="max-w-prose mx-auto p-4">
+      <div className="max-w-prose mx-auto">
         <h1 className="text-2xl font-bold mb-4">Searching...</h1>
         <p>Please wait while we search for &quot;{query}&quot;</p>
       </div>

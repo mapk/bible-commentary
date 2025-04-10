@@ -6,12 +6,24 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { fetchCommentaryRequests } from "@/lib/api";
 
 export default function Header() {
   const { user } = useAuth();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [requestCount, setRequestCount] = useState(0);
+
+  useEffect(() => {
+    const loadRequestCount = async () => {
+      if (user) {
+        const requests = await fetchCommentaryRequests();
+        setRequestCount(requests.length);
+      }
+    };
+    loadRequestCount();
+  }, [user]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -46,10 +58,17 @@ export default function Header() {
           </Button>
           {user ? (
             <>
-              <Button variant="outline" asChild>
-                <Link href="/requests">Requests</Link>
+              <Button variant="outline" asChild className="relative">
+                <Link href="/requests">
+                  Requests
+                  {requestCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {requestCount}
+                    </span>
+                  )}
+                </Link>
               </Button>
-              <Button variant="default" onClick={handleLogout}>
+              <Button variant="outline" onClick={handleLogout}>
                 Sign out
               </Button>
             </>
