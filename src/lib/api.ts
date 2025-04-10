@@ -85,21 +85,41 @@ export async function fetchChapter(
   bookId: string,
   chapter: number
 ): Promise<ChapterData> {
-  const response = await fetch(
-    `https://api.scripture.api.bible/v1/bibles/${BIBLE_ID}/chapters/${bookId}.${chapter}`,
-    {
-      headers: {
-        "api-key": API_KEY,
-      },
+  try {
+    const response = await fetch(
+      `https://api.scripture.api.bible/v1/bibles/${BIBLE_ID}/verses?chapter.id=${bookId}.${chapter}`,
+      {
+        headers: {
+          "api-key": API_KEY,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch chapter");
     }
-  );
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch chapter");
+    const data = await response.json();
+
+    if (!data.data) {
+      throw new Error("No data returned from API");
+    }
+
+    // Transform the API response into our verse format
+    const verses = data.data.map(
+      (verse: { id: string; reference: string; text: string }) => ({
+        number: parseInt(verse.id.split(".").pop() || "0"),
+        text: verse.text,
+      })
+    );
+
+    return {
+      verses: verses,
+    };
+  } catch (error) {
+    console.error("Error fetching chapter:", error);
+    throw error;
   }
-
-  const data = await response.json();
-  return data.data;
 }
 
 export async function getBookId(bookName: string): Promise<string | null> {
@@ -284,6 +304,47 @@ export async function fetchCommentary(book: string, chapter: number) {
     return data;
   } catch (error) {
     console.error("Error fetching commentary:", error);
+    return [];
+  }
+}
+
+export async function requestCommentary(
+  book: string,
+  chapter: number,
+  verse: number
+) {
+  try {
+    const { data, error } = await supabase
+      .from("commentary_requests")
+      .insert([
+        {
+          book,
+          chapter,
+          verse,
+          status: "pending",
+        },
+      ])
+      .select();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error requesting commentary:", error);
+    throw error;
+  }
+}
+
+export async function fetchCommentaryRequests() {
+  try {
+    const { data, error } = await supabase
+      .from("commentary_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error fetching commentary requests:", error);
     return [];
   }
 }
