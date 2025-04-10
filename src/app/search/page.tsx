@@ -50,7 +50,9 @@ export default function SearchPage() {
     return (
       <div className="max-w-prose mx-auto">
         <h1 className="text-2xl font-bold mb-4">Searching...</h1>
-        <p>Please wait while we search for &quot;{query}&quot;</p>
+        <p className="text-slate-400">
+          Please wait while we search for &quot;{query}&quot;
+        </p>
       </div>
     );
   }
@@ -70,7 +72,7 @@ export default function SearchPage() {
         Search Results for &quot;{query}&quot;
       </h1>
       {results.length === 0 ? (
-        <p>No results found.</p>
+        <p className="text-slate-400">No results found.</p>
       ) : (
         <div className="space-y-6 md:space-y-4">
           {results.map((result, index) => (

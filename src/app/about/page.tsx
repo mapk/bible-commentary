@@ -41,8 +41,8 @@ export default function About() {
           <h1 className="text-xl font-semibold mb-4">Future iterations</h1>
           <p className="mb-4">
             Future iterations of this project will include multiple Bible
-            versions, search functionality, commentary indicators, and more
-            commentary from others.
+            versions, and more commentary from others, commentary from past
+            elder articles, ability to edit one&apos;s own commentary.
           </p>
           <h1 className="text-xl font-semibold mb-4">The stack</h1>
           <p className="mb-4">

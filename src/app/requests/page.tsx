@@ -128,8 +128,12 @@ export default function RequestsPage() {
   return (
     <div className="max-w-prose mx-auto">
       <h1 className="text-2xl font-bold mb-8">Commentary Requests</h1>
+      <p className="mb-4">
+        Below is a list of verses for which people have requested Molokan
+        commentary.
+      </p>
       {requests.length === 0 ? (
-        <p>No requests found.</p>
+        <p className="text-slate-400">No requests found.</p>
       ) : (
         <div className="space-y-6 md:space-y-4">
           {requests.map((request) => (
@@ -154,12 +158,12 @@ export default function RequestsPage() {
                       </span>
                     </Link>
                   </Button>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-slate-400 mt-1">
                     {new Date(request.created_at).toLocaleDateString()}
                   </div>
                 </div>
                 <div className="w-full md:w-3/4">
-                  <span className="text-gray-600">{request.verse_text}</span>
+                  <span>{request.verse_text}</span>
                 </div>
               </CardContent>
             </Card>

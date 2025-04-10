@@ -249,7 +249,7 @@ export default function Chapter({
 
       return (
         <div className="text-center py-4">
-          <p className="text-gray-500 mb-4">
+          <p className="text-slate-400 mb-4">
             No commentary available for this verse.
           </p>
           <Button
