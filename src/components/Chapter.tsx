@@ -8,8 +8,16 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { fetchCommentary } from "@/lib/api";
+import {
+  fetchCommentary,
+  requestCommentary,
+  fetchCommentaryRequests,
+} from "@/lib/api";
 import { CommentaryForm } from "@/components/CommentaryForm";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 function extractBibleVerses(html: string) {
   const parser = new DOMParser();
@@ -114,6 +122,10 @@ export default function Chapter({
   const [versesWithCommentary, setVersesWithCommentary] = useState<Set<number>>(
     new Set()
   );
+  const [requestedVerses, setRequestedVerses] = useState<Set<number>>(
+    new Set()
+  );
+  const { toast } = useToast();
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -154,6 +166,23 @@ export default function Chapter({
     loadCommentary();
   }, [html, bookId]); // Add html and bookId as dependencies
 
+  // Load existing commentary requests
+  useEffect(() => {
+    const loadRequests = async () => {
+      const requests = await fetchCommentaryRequests();
+      const requestedVerseSet = new Set(
+        requests
+          .filter(
+            (req) => req.book === bookId && req.chapter === currentChapter
+          )
+          .map((req) => req.verse)
+      );
+      setRequestedVerses(requestedVerseSet);
+    };
+
+    loadRequests();
+  }, [bookId, currentChapter]);
+
   const onClick = async (number: number) => {
     setSelectedVerse(number);
     setIsSheetOpen(true);
@@ -179,6 +208,85 @@ export default function Chapter({
       .split(" ")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
+  };
+
+  const handleRequestCommentary = async (verse: number) => {
+    try {
+      await requestCommentary(bookId, currentChapter, verse);
+      // Add the verse to the requested set
+      setRequestedVerses((prev) => new Set([...Array.from(prev), verse]));
+      toast({
+        title: "Commentary Requested",
+        description: "Your request has been submitted successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit commentary request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderCommentaryContent = () => {
+    if (!selectedVerse) return null;
+
+    if (!commentary || commentary.length === 0) {
+      // Check if this verse has already been requested
+      if (requestedVerses.has(selectedVerse)) {
+        return (
+          <Alert className="bg-yellow-50 border-yellow-200">
+            <InfoIcon className="h-4 w-4 text-yellow-900" />
+            <AlertTitle className="mt-1 text-yellow-900">
+              Commentary has been requested!
+            </AlertTitle>
+            <AlertDescription className="text-yellow-900 text-sm">
+              The commentators have been notified. Someone will respond soon.
+            </AlertDescription>
+          </Alert>
+        );
+      }
+
+      return (
+        <div className="text-center py-4">
+          <p className="text-gray-500 mb-4">
+            No commentary available for this verse.
+          </p>
+          <Button
+            variant="link"
+            className="text-blue-600"
+            onClick={() => handleRequestCommentary(selectedVerse)}
+          >
+            Request Commentary
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {commentary.map((comment) => (
+          <Card key={comment.id} className="text-slate-600">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base text-slate-900">
+                {comment.commentary_author}
+                {comment.verse_range &&
+                  comment.verse_range !== selectedVerse?.toString() && (
+                    <span className="text-sm font-normal text-slate-500 ml-2">
+                      (verses {comment.verse_range})
+                    </span>
+                  )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm/5 whitespace-pre-wrap">
+                {comment.commentary_text}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -240,31 +348,7 @@ export default function Chapter({
               }}
             />
 
-            {commentary.map((comment) => (
-              <Card key={comment.id} className="text-slate-600">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base text-slate-900">
-                    {comment.commentary_author}
-                    {comment.verse_range &&
-                      comment.verse_range !== selectedVerse?.toString() && (
-                        <span className="text-sm font-normal text-slate-500 ml-2">
-                          (verses {comment.verse_range})
-                        </span>
-                      )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm/5 whitespace-pre-wrap">
-                    {comment.commentary_text}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-            {commentary.length === 0 && (
-              <p className="text-center text-slate-500">
-                No commentary available for this verse.
-              </p>
-            )}
+            {renderCommentaryContent()}
           </div>
         </SheetContent>
       </Sheet>

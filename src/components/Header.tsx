@@ -45,9 +45,14 @@ export default function Header() {
             <Link href="/about">About</Link>
           </Button>
           {user ? (
-            <Button variant="default" onClick={handleLogout}>
-              Sign out
-            </Button>
+            <>
+              <Button variant="outline" asChild>
+                <Link href="/requests">Requests</Link>
+              </Button>
+              <Button variant="default" onClick={handleLogout}>
+                Sign out
+              </Button>
+            </>
           ) : (
             <Button variant="default" asChild>
               <Link href="/login">Sign in</Link>
