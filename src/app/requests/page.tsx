@@ -128,7 +128,7 @@ export default function RequestsPage() {
   return (
     <div className="max-w-prose mx-auto">
       <h1 className="text-2xl font-bold mb-8">Commentary Requests</h1>
-      <p className="mb-4">
+      <p className="mb-8">
         Below is a list of verses for which people have requested Molokan
         commentary.
       </p>
