@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { fetchBibleBooks, fetchChapters } from "@/lib/api";
+import { fetchBibleBooks, fetchChapters, getUserProfile } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +20,15 @@ interface CommentaryFormProps {
   currentBook: string;
   currentChapter: number;
   currentVerse: number;
-  onCommentaryAdded: () => void;
+  onCommentaryAdded?: () => void;
+  initialText?: string;
+  onSubmit?: (commentaryText: string) => void;
+  onCancel?: () => void;
+  submitLabel?: string;
+  cancelLabel?: string;
+  isEditing?: boolean;
+  commentaryAuthor?: string;
+  verseRange?: string;
 }
 
 export function CommentaryForm({
@@ -28,6 +36,14 @@ export function CommentaryForm({
   currentChapter,
   currentVerse,
   onCommentaryAdded,
+  initialText = "",
+  onSubmit,
+  onCancel,
+  submitLabel = "Save Commentary",
+  cancelLabel = "Cancel",
+  isEditing = false,
+  commentaryAuthor = "",
+  verseRange,
 }: CommentaryFormProps) {
   const { user } = useAuth();
   const [books, setBooks] = useState<{ id: string; name: string }[]>([]);
@@ -38,9 +54,12 @@ export function CommentaryForm({
     commentary_author: "",
     book: currentBook,
     chapter: isNaN(currentChapter) ? 1 : currentChapter,
-    verse_range: currentVerse.toString(),
-    commentary_text: "",
+    verse_range: isEditing
+      ? verseRange || currentVerse.toString()
+      : currentVerse.toString(),
+    commentary_text: initialText,
   });
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
     const loadBooks = async () => {
@@ -60,6 +79,63 @@ export function CommentaryForm({
     loadChapters();
   }, [formData.book]);
 
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user?.id) return;
+
+      setLoadingProfile(true);
+      try {
+        const profile = await getUserProfile(user.id);
+
+        if (profile?.username) {
+          setFormData((prev) => ({
+            ...prev,
+            commentary_author: profile.username,
+          }));
+        } else if (user.user_metadata?.full_name) {
+          // Use full name from user metadata if available
+          setFormData((prev) => ({
+            ...prev,
+            commentary_author: user.user_metadata.full_name,
+          }));
+        } else {
+          // Use email as last resort
+          setFormData((prev) => ({
+            ...prev,
+            commentary_author: user.email || "",
+          }));
+        }
+      } catch (error) {
+        console.error("Error loading profile:", error);
+        if (user.user_metadata?.full_name) {
+          setFormData((prev) => ({
+            ...prev,
+            commentary_author: user.user_metadata.full_name,
+          }));
+        } else {
+          setFormData((prev) => ({
+            ...prev,
+            commentary_author: user.email || "",
+          }));
+        }
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    loadProfile();
+  }, [user]);
+
+  // Update author when editing
+  useEffect(() => {
+    if (isEditing && commentaryAuthor) {
+      setFormData((prev) => ({
+        ...prev,
+        commentary_author: commentaryAuthor,
+      }));
+    }
+  }, [isEditing, commentaryAuthor]);
+
   // If not authenticated, show login message
   if (!user) {
     return (
@@ -73,30 +149,37 @@ export function CommentaryForm({
     setError(null);
 
     try {
-      const { error: supabaseError } = await supabase
-        .from("commentary")
-        .insert([formData]);
+      if (isEditing) {
+        // Edit mode
+        await onSubmit?.(formData.commentary_text);
+      } else {
+        // Create mode
+        const { error: supabaseError } = await supabase
+          .from("commentary")
+          .insert([formData]);
 
-      if (supabaseError) {
-        console.error("Database error:", supabaseError);
-        setError(supabaseError.message);
-        return;
+        if (supabaseError) {
+          console.error("Database error:", supabaseError);
+          setError(supabaseError.message);
+          return;
+        }
+
+        // Reset form but keep the author name
+        const currentAuthor = formData.commentary_author;
+        setFormData({
+          commentary_author: currentAuthor, // Keep the current author name
+          book: currentBook,
+          chapter: isNaN(currentChapter) ? 1 : currentChapter,
+          verse_range: currentVerse.toString(),
+          commentary_text: "",
+        });
+
+        // Refresh commentary list
+        onCommentaryAdded?.();
       }
-
-      // Reset form
-      setFormData({
-        commentary_author: "",
-        book: currentBook,
-        chapter: isNaN(currentChapter) ? 1 : currentChapter,
-        verse_range: currentVerse.toString(),
-        commentary_text: "",
-      });
-
-      // Refresh commentary list
-      onCommentaryAdded();
     } catch (error) {
-      console.error("Failed to add commentary:", error);
-      setError("Failed to add commentary. Please try again.");
+      console.error("Failed to save commentary:", error);
+      setError("Failed to save commentary. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -111,76 +194,86 @@ export function CommentaryForm({
               {error}
             </div>
           )}
-          <div>
-            <Input
-              id="author"
-              placeholder="Your Name"
-              value={formData.commentary_author}
-              onChange={(e) =>
-                setFormData({ ...formData, commentary_author: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label>Book</Label>
-              <Select
-                value={formData.book}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, book: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Book" />
-                </SelectTrigger>
-                <SelectContent>
-                  {books.map((book) => (
-                    <SelectItem key={book.id} value={book.id}>
-                      {book.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {!isEditing && (
+            <>
+              <div>
+                <Input
+                  id="author"
+                  placeholder={loadingProfile ? "Loading..." : "Your Name"}
+                  value={formData.commentary_author}
+                  disabled
+                  className="bg-slate-50"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>Book</Label>
+                  <Select
+                    value={formData.book}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, book: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Book" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {books.map((book) => (
+                        <SelectItem key={book.id} value={book.id}>
+                          {book.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <Label>Chapter</Label>
-              <Select
-                value={String(formData.chapter)}
-                onValueChange={(value) => {
-                  const chapter = parseInt(value);
-                  setFormData({
-                    ...formData,
-                    chapter: isNaN(chapter) ? 1 : chapter,
-                  });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Chapter" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(chapters.length > 0 ? chapters : [1]).map((chapter) => (
-                    <SelectItem key={chapter} value={String(chapter)}>
-                      {chapter}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <div>
+                  <Label>Chapter</Label>
+                  <Select
+                    value={String(formData.chapter)}
+                    onValueChange={(value) => {
+                      const chapter = parseInt(value);
+                      setFormData({
+                        ...formData,
+                        chapter: isNaN(chapter) ? 1 : chapter,
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Chapter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(chapters.length > 0 ? chapters : [1]).map((chapter) => (
+                        <SelectItem key={chapter} value={String(chapter)}>
+                          {chapter}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <Label>Verse</Label>
-              <Input
-                placeholder="e.g., 1 or 1-5"
-                value={formData.verse_range}
-                onChange={(e) =>
-                  setFormData({ ...formData, verse_range: e.target.value })
-                }
-                required
-              />
+                <div>
+                  <Label>Verse</Label>
+                  <Input
+                    placeholder="e.g., 1 or 1-5"
+                    value={formData.verse_range}
+                    onChange={(e) =>
+                      setFormData({ ...formData, verse_range: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+              </div>
+            </>
+          )}
+          {isEditing && (
+            <div className="space-y-2">
+              <p className="text-sm text-slate-600">
+                {books.find((b) => b.id === currentBook)?.name} {currentChapter}
+                :{verseRange}
+              </p>
             </div>
-          </div>
+          )}
           <div>
             <Textarea
               placeholder="Your Commentary"
@@ -189,12 +282,19 @@ export function CommentaryForm({
                 setFormData({ ...formData, commentary_text: e.target.value })
               }
               required
-              className="min-h-[100px]"
+              className="min-h-[200px]"
             />
           </div>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Saving..." : "Save Commentary"}
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving..." : submitLabel}
+            </Button>
+            {onCancel && (
+              <Button type="button" variant="outline" onClick={onCancel}>
+                {cancelLabel}
+              </Button>
+            )}
+          </div>
         </form>
       </CardContent>
     </Card>

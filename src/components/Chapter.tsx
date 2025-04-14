@@ -12,12 +12,17 @@ import {
   fetchCommentary,
   requestCommentary,
   fetchCommentaryRequests,
+  updateCommentary,
+  deleteCommentary,
+  getUserProfile,
+  type UserProfile,
 } from "@/lib/api";
 import { CommentaryForm } from "@/components/CommentaryForm";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { InfoIcon } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 function extractBibleVerses(html: string) {
   const parser = new DOMParser();
@@ -114,6 +119,7 @@ export default function Chapter({
   html: string;
   bookId: string;
 }) {
+  const { user } = useAuth();
   const [verses, setVerses] = useState<{ number: number; verse: string }[]>([]);
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -125,6 +131,10 @@ export default function Chapter({
   const [requestedVerses, setRequestedVerses] = useState<Set<number>>(
     new Set()
   );
+  const [editingCommentary, setEditingCommentary] = useState<Commentary | null>(
+    null
+  );
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -183,6 +193,21 @@ export default function Chapter({
     loadRequests();
   }, [bookId, currentChapter]);
 
+  // Load user profile
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (user?.id) {
+        try {
+          const profile = await getUserProfile(user.id);
+          setUserProfile(profile);
+        } catch (error) {
+          console.error("Error loading user profile:", error);
+        }
+      }
+    };
+    loadUserProfile();
+  }, [user]);
+
   const onClick = async (number: number) => {
     setSelectedVerse(number);
     setIsSheetOpen(true);
@@ -228,6 +253,92 @@ export default function Chapter({
     }
   };
 
+  const handleEditCommentary = (comment: Commentary) => {
+    setEditingCommentary(comment);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentary(null);
+  };
+
+  const handleSaveEdit = async (commentaryText: string) => {
+    if (!editingCommentary) return;
+
+    try {
+      await updateCommentary(editingCommentary.id, commentaryText);
+
+      // Refresh commentary data
+      const commentaryData = await fetchCommentary(bookId, currentChapter);
+      const relevantCommentary = commentaryData.filter((comment) =>
+        isVerseInRange(selectedVerse || 1, comment.verse_range)
+      );
+      setCommentary(relevantCommentary);
+
+      setEditingCommentary(null);
+      toast({
+        title: "Commentary Updated",
+        description: "Your changes have been saved successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update commentary. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteCommentary = async (commentaryId: number) => {
+    if (!window.confirm("Are you sure you want to delete this commentary?")) {
+      return;
+    }
+
+    try {
+      // Delete from database
+      await deleteCommentary(commentaryId);
+
+      // Close the edit form
+      setEditingCommentary(null);
+
+      // Close the sheet
+      setIsSheetOpen(false);
+
+      // Refresh the commentary list for the current verse
+      const commentaryData = await fetchCommentary(bookId, currentChapter);
+      const relevantCommentary = commentaryData.filter((comment) =>
+        isVerseInRange(selectedVerse || 1, comment.verse_range)
+      );
+      setCommentary(relevantCommentary);
+
+      // Update the verses with commentary set
+      const versesWithComments = new Set<number>();
+      commentaryData.forEach((comment) => {
+        if (!comment.verse_range) return;
+        if (comment.verse_range.includes("-")) {
+          const [start, end] = comment.verse_range.split("-").map(Number);
+          for (let verse = start; verse <= end; verse++) {
+            versesWithComments.add(verse);
+          }
+        } else {
+          versesWithComments.add(Number(comment.verse_range));
+        }
+      });
+      setVersesWithCommentary(versesWithComments);
+
+      toast({
+        title: "Commentary Deleted",
+        description: "Your commentary has been deleted successfully.",
+      });
+    } catch (error) {
+      console.error("Error deleting commentary:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete commentary. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const renderCommentaryContent = () => {
     if (!selectedVerse) return null;
 
@@ -266,22 +377,60 @@ export default function Chapter({
     return (
       <div className="space-y-4">
         {commentary.map((comment) => (
-          <Card key={comment.id} className="text-slate-600">
+          <Card key={comment.id} className="text-slate-600 group relative">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base text-slate-900">
-                {comment.commentary_author}
-                {comment.verse_range &&
-                  comment.verse_range !== selectedVerse?.toString() && (
-                    <span className="text-sm font-normal text-slate-500 ml-2">
-                      (verses {comment.verse_range})
-                    </span>
-                  )}
-              </CardTitle>
+              <div className="flex justify-between items-start">
+                <CardTitle className="text-base text-slate-900">
+                  {comment.commentary_author}
+                  {comment.verse_range &&
+                    comment.verse_range !== selectedVerse?.toString() && (
+                      <span className="text-sm font-normal text-slate-500 ml-2">
+                        (verses {comment.verse_range})
+                      </span>
+                    )}
+                </CardTitle>
+                {userProfile?.username === comment.commentary_author && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-0 h-auto text-blue-600 hover:text-blue-800 hover:no-underline"
+                    onClick={() => handleEditCommentary(comment)}
+                  >
+                    Edit
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm/5 whitespace-pre-wrap">
-                {comment.commentary_text}
-              </p>
+              {editingCommentary?.id === comment.id ? (
+                <div className="space-y-4">
+                  <CommentaryForm
+                    currentBook={bookId}
+                    currentChapter={currentChapter}
+                    currentVerse={selectedVerse}
+                    initialText={comment.commentary_text}
+                    onCancel={handleCancelEdit}
+                    onSubmit={handleSaveEdit}
+                    submitLabel="Save"
+                    cancelLabel="Cancel"
+                    isEditing={true}
+                    commentaryAuthor={comment.commentary_author}
+                    verseRange={comment.verse_range}
+                  />
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => handleDeleteCommentary(comment.id)}
+                    className="mt-2 text-red-500"
+                  >
+                    Delete
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-sm/5 whitespace-pre-wrap">
+                  {comment.commentary_text}
+                </p>
+              )}
             </CardContent>
           </Card>
         ))}

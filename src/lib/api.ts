@@ -34,6 +34,13 @@ interface ChapterData {
   verses: Verse[];
 }
 
+export interface UserProfile {
+  user_id: string;
+  email: string;
+  username: string;
+  updated_at?: string;
+}
+
 export async function fetchBibleBooks() {
   try {
     const response = await api.get("/bibles/de4e12af7f28f599-02/books");
@@ -346,5 +353,86 @@ export async function fetchCommentaryRequests() {
   } catch (error) {
     console.error("Error fetching commentary requests:", error);
     return [];
+  }
+}
+
+export async function updateCommentary(
+  commentaryId: number,
+  commentaryText: string
+) {
+  try {
+    console.log("Attempting to update commentary:", {
+      commentaryId,
+      commentaryText,
+    });
+
+    const { data, error } = await supabase
+      .from("commentary")
+      .update({ commentary_text: commentaryText })
+      .eq("id", commentaryId)
+      .select();
+
+    if (error) {
+      console.error("Supabase update error:", error);
+      throw error;
+    }
+
+    console.log("Update operation result:", { data, error });
+    return data;
+  } catch (error) {
+    console.error("Error updating commentary:", error);
+    throw error;
+  }
+}
+
+export async function deleteCommentary(commentaryId: number) {
+  try {
+    const { error } = await supabase
+      .from("commentary")
+      .delete()
+      .eq("id", commentaryId);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error("Error deleting commentary:", error);
+    throw error;
+  }
+}
+
+export async function updateUserProfile(userId: string, userName: string) {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .upsert({
+        user_id: userId,
+        username: userName,
+        updated_at: new Date().toISOString(),
+      })
+      .select();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    throw error;
+  }
+}
+
+export async function getUserProfile(
+  userId: string
+): Promise<UserProfile | null> {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return null;
   }
 }
