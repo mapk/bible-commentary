@@ -35,7 +35,7 @@ interface ChapterData {
 }
 
 export interface UserProfile {
-  user_id: string;
+  id: string;
   email: string;
   username: string;
   updated_at?: string;
@@ -405,7 +405,7 @@ export async function updateUserProfile(userId: string, userName: string) {
     const { data, error } = await supabase
       .from("profiles")
       .upsert({
-        user_id: userId,
+        id: userId,
         username: userName,
         updated_at: new Date().toISOString(),
       })
@@ -426,7 +426,7 @@ export async function getUserProfile(
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("user_id", userId)
+      .eq("id", userId)
       .single();
 
     if (error) throw error;
