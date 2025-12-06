@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
-import { fetchCommentaryRequests, getUserProfile, type UserProfile } from "@/lib/api";
+import { fetchCommentaryRequests, getUserProfile } from "@/lib/api";
 import {
   Popover,
   PopoverContent,
@@ -31,7 +31,6 @@ export default function Header({
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [requestCount, setRequestCount] = useState(0);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [firstName, setFirstName] = useState<string>("");
 
   useEffect(() => {
@@ -48,7 +47,6 @@ export default function Header({
     const loadUserProfile = async () => {
       if (user?.id) {
         const profile = await getUserProfile(user.id);
-        setUserProfile(profile);
         // Extract first name from username or email
         if (profile?.username) {
           const nameParts = profile.username.split(" ");

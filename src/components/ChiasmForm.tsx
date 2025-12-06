@@ -36,7 +36,7 @@ interface ChiasmFormProps {
     id?: string;
     name: string;
     description: string | null;
-    units: { unit_order: number; verse_references: any[]; description?: string | null }[];
+    units: { unit_order: number; verse_references: VerseReference[]; description?: string | null }[];
   }) => Promise<void>;
   editingChiasm?: ChiasmWithUnits | null;
 }
@@ -321,7 +321,7 @@ export function ChiasmForm({
 
             {units.length === 0 ? (
               <p className="text-sm text-slate-500 text-center py-8">
-                No units added yet. Click "Add Unit" to get started.
+                No units added yet. Click &quot;Add Unit&quot; to get started.
               </p>
             ) : (
               <div className="space-y-3">

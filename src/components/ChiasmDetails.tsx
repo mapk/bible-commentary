@@ -10,7 +10,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getChiasticLevel, getChiasticBackgroundColor } from "@/lib/chiasm-colors";
-import type { ChiasmWithUnits } from "@/lib/api";
+import type { ChiasmWithUnits, ChiasmUnit } from "@/lib/api";
+import type { VerseReference } from "@/lib/verse-parser";
 import { useAuth } from "@/contexts/AuthContext";
 import { Edit, Trash2 } from "lucide-react";
 
@@ -46,7 +47,7 @@ export function ChiasmDetails({
 
   const maxLevel = Math.floor(chiasm.units.length / 2);
 
-  const formatVerseReference = (ref: any): string => {
+  const formatVerseReference = (ref: VerseReference): string => {
     if (!ref) return "";
     
     let result = `${ref.book} ${ref.chapter}:${ref.verse}`;
@@ -90,7 +91,7 @@ export function ChiasmDetails({
     return center - 1 - distanceFromCenter;
   };
 
-  const getPrimaryVerseReference = (unit: any): string => {
+  const getPrimaryVerseReference = (unit: ChiasmUnit): string => {
     const refs = Array.isArray(unit.verse_references)
       ? unit.verse_references
       : [unit.verse_references];
@@ -114,7 +115,7 @@ export function ChiasmDetails({
         <div className="flex-1 overflow-y-auto">
           <div className="space-y-2 pb-4">
             <h3 className="font-semibold text-lg">Chiastic Structure</h3>
-            {chiasm.units.map((unit, index) => {
+            {chiasm.units.map((unit) => {
               const level = getChiasticLevel(unit.unit_order, chiasm.units.length);
               const bgColor = getChiasticBackgroundColor(level, maxLevel);
               const borderColor = getChiasticBackgroundColor(level, maxLevel, 70, 60);
@@ -152,7 +153,7 @@ export function ChiasmDetails({
                   <CardContent className="px-4 pt-0 pb-2">
                     {refs.length > 1 && (
                       <div className="space-y-0.5 mb-2">
-                        {refs.slice(1).map((ref: any, refIndex: number) => (
+                        {refs.slice(1).map((ref: VerseReference, refIndex: number) => (
                           <div
                             key={refIndex}
                             className="text-xs font-mono text-slate-600"

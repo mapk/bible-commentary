@@ -49,7 +49,6 @@ export function parseVerseReference(
   const singleVersePattern =
     /^([\w\s]+?)\s+(\d+):(\d+)(?:\s*-\s*([\w\s]+?)\s+(\d+):(\d+))?$/i;
   const verseRangePattern = /^([\w\s]+?)\s+(\d+):(\d+)-(\d+)$/i;
-  const multipleVersesPattern = /^([\w\s]+?)\s+(\d+):(\d+)(?:;(\d+):(\d+))+/i;
 
   // Try cross-book range first
   const crossBookMatch = trimmed.match(singleVersePattern);
