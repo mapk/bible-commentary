@@ -16,13 +16,26 @@ import {
   deleteCommentary,
   getUserProfile,
   type UserProfile,
+  fetchChiasmsForChapter,
+  updateChiasm,
+  deleteChiasm,
+  type ChiasmWithUnits,
+  type ChiasmUnit,
 } from "@/lib/api";
 import { CommentaryForm } from "@/components/CommentaryForm";
+import { ChiasmDetails } from "@/components/ChiasmDetails";
+import { ChiasmForm } from "@/components/ChiasmForm";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { InfoIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useChiasm } from "@/contexts/ChiasmContext";
+import { isVerseInReference, type VerseReference } from "@/lib/verse-parser";
+import {
+  getChiasticLevel,
+  getChiasticBackgroundColor,
+} from "@/lib/chiasm-colors";
 
 function extractBibleVerses(html: string) {
   const parser = new DOMParser();
@@ -56,28 +69,74 @@ function extractBibleVerses(html: string) {
   return verses;
 }
 
+interface VerseChiasmInfo {
+  chiasm: ChiasmWithUnits;
+  unit: ChiasmUnit;
+  level: number;
+  color: string;
+}
+
 function Verse({
   children,
   number,
   onClick,
   selected,
   hasCommentary,
+  chiasmInfo,
+  showChiasms,
 }: {
   children: React.ReactNode;
   number: number;
   onClick: (number: number) => void;
   selected: boolean;
   hasCommentary: boolean;
+  chiasmInfo?: VerseChiasmInfo[];
+  showChiasms: boolean;
 }) {
+  // Get the primary chiasm color (use the first one if multiple)
+  const primaryChiasm =
+    chiasmInfo && chiasmInfo.length > 0 ? chiasmInfo[0] : null;
+  const hasChiasm = showChiasms && primaryChiasm !== null;
+
+  // Calculate indentation level for chiastic structure
+  const getIndentationLevel = (
+    unitOrder: number,
+    totalUnits: number
+  ): number => {
+    const center = Math.ceil(totalUnits / 2);
+    const distanceFromCenter = Math.abs(unitOrder - center);
+    return center - 1 - distanceFromCenter;
+  };
+
+  const indentLevel = hasChiasm
+    ? getIndentationLevel(
+        primaryChiasm.unit.unit_order,
+        primaryChiasm.chiasm.units.length
+      )
+    : 0;
+
   return (
     <div
       onClick={() => onClick(number)}
-      className={`p-2 rounded-lg transition-colors ${
+      className={`p-2 rounded-lg transition-colors relative ${
         selected ? "bg-slate-100" : "hover:bg-slate-50 hover:text-slate-900"
       } cursor-pointer ${hasCommentary ? "text-slate-900" : "text-slate-500"}`}
+      style={{
+        ...(hasChiasm
+          ? {
+              backgroundColor: primaryChiasm.color,
+            }
+          : {}),
+        marginLeft: hasChiasm ? `${indentLevel * 1.5}rem` : "0",
+      }}
     >
       <sup className="mr-2 text-slate-500">{number}</sup>
       {children}
+      {hasChiasm && chiasmInfo && chiasmInfo.length > 1 && (
+        <span className="absolute top-1 right-1 text-xs bg-slate-700 text-white rounded-full w-5 h-5 flex items-center justify-center">
+          {chiasmInfo.length}
+        </span>
+      )}
     </div>
   );
 }
@@ -120,6 +179,7 @@ export default function Chapter({
   bookId: string;
 }) {
   const { user } = useAuth();
+  const { showChiasms } = useChiasm();
   const [verses, setVerses] = useState<{ number: number; verse: string }[]>([]);
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -135,6 +195,17 @@ export default function Chapter({
     null
   );
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [verseChiasmMap, setVerseChiasmMap] = useState<
+    Map<number, VerseChiasmInfo[]>
+  >(new Map());
+  const [selectedChiasm, setSelectedChiasm] = useState<ChiasmWithUnits | null>(
+    null
+  );
+  const [isChiasmDetailsOpen, setIsChiasmDetailsOpen] = useState(false);
+  const [editingChiasm, setEditingChiasm] = useState<ChiasmWithUnits | null>(
+    null
+  );
+  const [isChiasmFormOpen, setIsChiasmFormOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -208,7 +279,76 @@ export default function Chapter({
     loadUserProfile();
   }, [user]);
 
+  // Load chiasms for current chapter
+  useEffect(() => {
+    const loadChiasms = async () => {
+      if (!showChiasms || verses.length === 0) {
+        setVerseChiasmMap(new Map());
+        return;
+      }
+
+      try {
+        const path = window.location.pathname;
+        const chapterNum = getChapterFromPath(path);
+        const chapterChiasms = await fetchChiasmsForChapter(bookId, chapterNum);
+
+        // Build verse-to-chiasm mapping
+        const verseMap = new Map<number, VerseChiasmInfo[]>();
+
+        chapterChiasms.forEach((chiasm) => {
+          const maxLevel = Math.floor(chiasm.units.length / 2);
+
+          chiasm.units.forEach((unit) => {
+            const level = getChiasticLevel(
+              unit.unit_order,
+              chiasm.units.length
+            );
+            const color = getChiasticBackgroundColor(level, maxLevel);
+
+            const refs = Array.isArray(unit.verse_references)
+              ? unit.verse_references
+              : [unit.verse_references];
+
+            refs.forEach((ref: VerseReference) => {
+              // Check all verses in the current chapter that match this reference
+              verses.forEach((verse) => {
+                if (
+                  isVerseInReference(bookId, currentChapter, verse.number, ref)
+                ) {
+                  const existing = verseMap.get(verse.number) || [];
+                  existing.push({
+                    chiasm,
+                    unit,
+                    level,
+                    color,
+                  });
+                  verseMap.set(verse.number, existing);
+                }
+              });
+            });
+          });
+        });
+
+        setVerseChiasmMap(verseMap);
+      } catch (error) {
+        console.error("Error loading chiasms:", error);
+      }
+    };
+
+    loadChiasms();
+  }, [showChiasms, bookId, currentChapter, verses.length]);
+
   const onClick = async (number: number) => {
+    // Check if this verse has chiasms
+    const verseChiasms = verseChiasmMap.get(number);
+    if (showChiasms && verseChiasms && verseChiasms.length > 0) {
+      // Show chiasm details instead of commentary
+      setSelectedChiasm(verseChiasms[0].chiasm);
+      setIsChiasmDetailsOpen(true);
+      return;
+    }
+
+    // Otherwise show commentary as usual
     setSelectedVerse(number);
     setIsSheetOpen(true);
 
@@ -217,6 +357,134 @@ export default function Chapter({
       isVerseInRange(number, comment.verse_range)
     );
     setCommentary(relevantCommentary);
+  };
+
+  const handleEditChiasm = (chiasm: ChiasmWithUnits) => {
+    setEditingChiasm(chiasm);
+    setIsChiasmDetailsOpen(false);
+    setIsChiasmFormOpen(true);
+  };
+
+  const handleDeleteChiasm = async (chiasmId: string) => {
+    try {
+      await deleteChiasm(chiasmId);
+      setIsChiasmDetailsOpen(false);
+      setSelectedChiasm(null);
+
+      // Reload chiasms
+      const path = window.location.pathname;
+      const chapterNum = getChapterFromPath(path);
+      const chapterChiasms = await fetchChiasmsForChapter(bookId, chapterNum);
+
+      // Rebuild verse map
+      const verseMap = new Map<number, VerseChiasmInfo[]>();
+      chapterChiasms.forEach((chiasm) => {
+        const maxLevel = Math.floor(chiasm.units.length / 2);
+        chiasm.units.forEach((unit) => {
+          const level = getChiasticLevel(unit.unit_order, chiasm.units.length);
+          const color = getChiasticBackgroundColor(level, maxLevel);
+          const refs = Array.isArray(unit.verse_references)
+            ? unit.verse_references
+            : [unit.verse_references];
+          refs.forEach((ref: VerseReference) => {
+            verses.forEach((verse) => {
+              if (
+                isVerseInReference(bookId, currentChapter, verse.number, ref)
+              ) {
+                const existing = verseMap.get(verse.number) || [];
+                existing.push({ chiasm, unit, level, color });
+                verseMap.set(verse.number, existing);
+              }
+            });
+          });
+        });
+      });
+      setVerseChiasmMap(verseMap);
+
+      toast({
+        title: "Success",
+        description: "Chiasm deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting chiasm:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete chiasm. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveChiasm = async (chiasmData: {
+    id?: string;
+    name: string;
+    description: string | null;
+    units: {
+      unit_order: number;
+      verse_references: VerseReference[];
+      description?: string | null;
+    }[];
+  }) => {
+    try {
+      if (chiasmData.id) {
+        // Update existing chiasm
+        await updateChiasm(
+          chiasmData.id,
+          chiasmData.name,
+          chiasmData.description,
+          chiasmData.units
+        );
+      } else {
+        // This shouldn't happen in edit mode, but handle it
+        throw new Error("Cannot update chiasm without ID");
+      }
+
+      setIsChiasmFormOpen(false);
+      setEditingChiasm(null);
+
+      // Reload chiasms
+      const path = window.location.pathname;
+      const chapterNum = getChapterFromPath(path);
+      const chapterChiasms = await fetchChiasmsForChapter(bookId, chapterNum);
+
+      // Rebuild verse map
+      const verseMap = new Map<number, VerseChiasmInfo[]>();
+      chapterChiasms.forEach((chiasm) => {
+        const maxLevel = Math.floor(chiasm.units.length / 2);
+        chiasm.units.forEach((unit) => {
+          const level = getChiasticLevel(unit.unit_order, chiasm.units.length);
+          const color = getChiasticBackgroundColor(level, maxLevel);
+          const refs = Array.isArray(unit.verse_references)
+            ? unit.verse_references
+            : [unit.verse_references];
+          refs.forEach((ref: VerseReference) => {
+            verses.forEach((verse) => {
+              if (
+                isVerseInReference(bookId, currentChapter, verse.number, ref)
+              ) {
+                const existing = verseMap.get(verse.number) || [];
+                existing.push({ chiasm, unit, level, color });
+                verseMap.set(verse.number, existing);
+              }
+            });
+          });
+        });
+      });
+      setVerseChiasmMap(verseMap);
+
+      toast({
+        title: "Success",
+        description: "Chiasm updated successfully",
+      });
+    } catch (error) {
+      console.error("Error saving chiasm:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save chiasm. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
   const handleSheetClose = () => {
@@ -447,10 +715,30 @@ export default function Chapter({
           onClick={onClick}
           selected={verse.number === selectedVerse}
           hasCommentary={versesWithCommentary.has(verse.number)}
+          chiasmInfo={verseChiasmMap.get(verse.number)}
+          showChiasms={showChiasms}
         >
           {verse.verse}
         </Verse>
       ))}
+      <ChiasmDetails
+        open={isChiasmDetailsOpen}
+        onOpenChange={setIsChiasmDetailsOpen}
+        chiasm={selectedChiasm}
+        onEdit={handleEditChiasm}
+        onDelete={handleDeleteChiasm}
+      />
+      <ChiasmForm
+        open={isChiasmFormOpen}
+        onOpenChange={(open) => {
+          setIsChiasmFormOpen(open);
+          if (!open) {
+            setEditingChiasm(null);
+          }
+        }}
+        onSave={handleSaveChiasm}
+        editingChiasm={editingChiasm}
+      />
       <Sheet open={isSheetOpen} onOpenChange={handleSheetClose}>
         <SheetContent side="right" className="flex flex-col gap-4">
           <SheetHeader className="mb-4 sticky top-0 z-10">

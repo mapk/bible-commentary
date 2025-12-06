@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { fetchChapters } from "@/lib/api";
+import { fetchChapters, fetchChiasmsForBook } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
+import { useChiasm } from "@/contexts/ChiasmContext";
+import { AlignRight } from "lucide-react";
 
 interface ChapterListProps {
   bookId: string;
@@ -14,9 +16,11 @@ interface ChapterListProps {
 interface ChapterWithCount {
   number: number;
   commentaryCount: number;
+  hasChiasm: boolean;
 }
 
 export function ChapterList({ bookId, name }: ChapterListProps) {
+  const { showChiasms } = useChiasm();
   const [chapters, setChapters] = useState<ChapterWithCount[]>([]);
 
   useEffect(() => {
@@ -37,19 +41,26 @@ export function ChapterList({ bookId, name }: ChapterListProps) {
           return acc;
         }, new Map<number, number>()) || new Map<number, number>();
 
+      // Get chapters with chiasms if enabled
+      let chaptersWithChiasms: string[] = [];
+      if (showChiasms) {
+        chaptersWithChiasms = await fetchChiasmsForBook(bookId);
+      }
+
       // Combine chapters with their counts
       const chaptersWithCounts = chapterList
         .filter((chapter) => !isNaN(Number(chapter)))
         .map((chapter) => ({
           number: Number(chapter),
           commentaryCount: countMap.get(Number(chapter)) || 0,
+          hasChiasm: chaptersWithChiasms.includes(String(chapter)),
         }));
 
       setChapters(chaptersWithCounts);
     };
 
     loadChaptersWithCommentary();
-  }, [bookId]);
+  }, [bookId, showChiasms]);
 
   return (
     <div className="">
@@ -64,11 +75,16 @@ export function ChapterList({ bookId, name }: ChapterListProps) {
           >
             <Button variant="secondary" className="w-full relative">
               <span>Chapter {chapter.number}</span>
-              {chapter.commentaryCount > 0 && (
-                <span className="absolute right-3 text-xs text-white bg-slate-300 rounded-full px-2 py-0.5">
-                  {chapter.commentaryCount}
-                </span>
-              )}
+              <div className="absolute right-3 flex items-center gap-1">
+                {showChiasms && chapter.hasChiasm && (
+                  <AlignRight className="h-4 w-4 text-purple-500" />
+                )}
+                {chapter.commentaryCount > 0 && (
+                  <span className="text-xs text-white bg-slate-300 rounded-full px-2 py-0.5">
+                    {chapter.commentaryCount}
+                  </span>
+                )}
+              </div>
             </Button>
           </Link>
         ))}
