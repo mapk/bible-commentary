@@ -14,7 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { Settings2 } from "lucide-react";
 
 interface HeaderProps {
   showChiasms?: boolean;
@@ -90,61 +90,81 @@ export default function Header({
               className="w-full md:w-[300px]"
             />
           </form>
-          {user && onToggleChiasms && (
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="show-chiasms"
-                checked={showChiasms}
-                onCheckedChange={onToggleChiasms}
-              />
-              <Label htmlFor="show-chiasms" className="cursor-pointer">
-                Show Chiasms
-              </Label>
-            </div>
-          )}
-          <Button variant="outline" asChild>
-            <Link href="/about">About</Link>
-          </Button>
-          {user ? (
-            <>
-              <Button variant="outline" asChild className="relative">
-                <Link href="/requests">
-                  Requests
-                  {requestCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {requestCount}
-                    </span>
-                  )}
-                </Link>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Settings2 className="h-4 w-4" />
               </Button>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="capitalize">
-                    {firstName || "User"}
+            </PopoverTrigger>
+            <PopoverContent className="w-56" align="end">
+              <div className="flex flex-col space-y-2">
+                {onToggleChiasms && (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between pr-2"
+                    onClick={() => onToggleChiasms(!showChiasms)}
+                  >
+                    <span>Show Chiasms</span>
+                    <Switch
+                      id="show-chiasms"
+                      checked={showChiasms}
+                      onCheckedChange={onToggleChiasms}
+                      className="scale-75"
+                    />
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56" align="end">
-                  <div className="flex flex-col space-y-2">
-                    {onCreateChiasm && (
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={onCreateChiasm}
-                      >
-                        Create a Chiasm
-                      </Button>
-                    )}
+                )}
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  asChild
+                >
+                  <Link href="/about">About</Link>
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+          {user ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="capitalize">
+                  {firstName || "User"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56" align="end">
+                <div className="flex flex-col space-y-2">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between relative pr-2"
+                    asChild
+                  >
+                    <Link href="/requests">
+                      <span>View Requests</span>
+                      {requestCount > 0 && (
+                        <span className="bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {requestCount}
+                        </span>
+                      )}
+                    </Link>
+                  </Button>
+                  {onCreateChiasm && (
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={handleLogout}
+                      onClick={onCreateChiasm}
                     >
-                      Sign out
+                      Create a Chiasm
                     </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </>
+                  )}
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={handleLogout}
+                  >
+                    Sign out
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           ) : (
             <Button variant="default" asChild>
               <Link href="/login">Sign in</Link>
