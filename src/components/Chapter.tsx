@@ -739,7 +739,7 @@ export default function Chapter({
         onSave={handleSaveChiasm}
         editingChiasm={editingChiasm}
       />
-      <Sheet open={isSheetOpen} onOpenChange={handleSheetClose}>
+      <Sheet open={isSheetOpen} onOpenChange={handleSheetClose} modal={false}>
         <SheetContent side="right" className="flex flex-col gap-4">
           <SheetHeader className="mb-4 sticky top-0 z-10">
             <SheetTitle>Commentary</SheetTitle>

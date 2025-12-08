@@ -103,7 +103,7 @@ export function ChiasmDetails({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
       <SheetContent side="right" className="flex flex-col h-full">
         <SheetHeader className="mb-4 pb-4 border-b shrink-0">
           <SheetTitle>{chiasm.name}</SheetTitle>
