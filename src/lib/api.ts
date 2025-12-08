@@ -1,5 +1,6 @@
 import axios from "axios";
 import { supabase } from "./supabase";
+import type { VerseReference } from "./verse-parser";
 
 const API_KEY = "d5b6cacdee5ceb38161e26a0777dc4d1";
 const API_URL = "https://api.scripture.api.bible/v1";
@@ -434,5 +435,249 @@ export async function getUserProfile(
   } catch (error) {
     console.error("Error fetching user profile:", error);
     return null;
+  }
+}
+
+// Chiasm types
+export interface Chiasm {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  color_scheme: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChiasmUnit {
+  id: string;
+  chiasm_id: string;
+  unit_order: number;
+  verse_references: VerseReference | VerseReference[]; // JSONB - can be single or array
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChiasmWithUnits extends Chiasm {
+  units: ChiasmUnit[];
+}
+
+// Chiasm API functions
+export async function createChiasm(
+  name: string,
+  description: string | null,
+  units: {
+    unit_order: number;
+    verse_references: VerseReference | VerseReference[];
+    description?: string | null;
+  }[]
+): Promise<ChiasmWithUnits | null> {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    // Create chiasm
+    const { data: chiasm, error: chiasmError } = await supabase
+      .from("chiasms")
+      .insert({
+        user_id: user.id,
+        name,
+        description,
+      })
+      .select()
+      .single();
+
+    if (chiasmError) throw chiasmError;
+
+    // Create units
+    const unitsToInsert = units.map((unit) => ({
+      chiasm_id: chiasm.id,
+      unit_order: unit.unit_order,
+      verse_references: unit.verse_references,
+      description: unit.description || null,
+    }));
+
+    const { data: createdUnits, error: unitsError } = await supabase
+      .from("chiasm_units")
+      .insert(unitsToInsert)
+      .select();
+
+    if (unitsError) throw unitsError;
+
+    return {
+      ...chiasm,
+      units: createdUnits || [],
+    };
+  } catch (error) {
+    console.error("Error creating chiasm:", error);
+    throw error;
+  }
+}
+
+export async function fetchChiasms(): Promise<ChiasmWithUnits[]> {
+  try {
+    const { data: chiasms, error: chiasmsError } = await supabase
+      .from("chiasms")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (chiasmsError) throw chiasmsError;
+
+    // Fetch units for each chiasm
+    const chiasmsWithUnits = await Promise.all(
+      (chiasms || []).map(async (chiasm) => {
+        const { data: units, error: unitsError } = await supabase
+          .from("chiasm_units")
+          .select("*")
+          .eq("chiasm_id", chiasm.id)
+          .order("unit_order", { ascending: true });
+
+        if (unitsError) throw unitsError;
+
+        return {
+          ...chiasm,
+          units: units || [],
+        };
+      })
+    );
+
+    return chiasmsWithUnits;
+  } catch (error) {
+    console.error("Error fetching chiasms:", error);
+    return [];
+  }
+}
+
+export async function fetchChiasmsForChapter(
+  bookId: string,
+  chapter: number
+): Promise<ChiasmWithUnits[]> {
+  try {
+    const allChiasms = await fetchChiasms();
+
+    // Filter chiasms that have units referencing this chapter
+    const relevantChiasms = allChiasms.filter((chiasm) => {
+      return chiasm.units.some((unit) => {
+        const refs = Array.isArray(unit.verse_references)
+          ? unit.verse_references
+          : [unit.verse_references];
+
+        return refs.some((ref: VerseReference) => {
+          // Check if reference includes this book and chapter
+          if (ref.bookId === bookId && ref.chapter === chapter) {
+            return true;
+          }
+          // Check cross-book ranges
+          if (ref.endBookId === bookId && ref.endChapter === chapter) {
+            return true;
+          }
+          return false;
+        });
+      });
+    });
+
+    return relevantChiasms;
+  } catch (error) {
+    console.error("Error fetching chiasms for chapter:", error);
+    return [];
+  }
+}
+
+export async function fetchChiasmsForBook(bookId: string): Promise<string[]> {
+  try {
+    const allChiasms = await fetchChiasms();
+    const chaptersWithChiasms = new Set<number>();
+
+    allChiasms.forEach((chiasm) => {
+      chiasm.units.forEach((unit) => {
+        const refs = Array.isArray(unit.verse_references)
+          ? unit.verse_references
+          : [unit.verse_references];
+
+        refs.forEach((ref: VerseReference) => {
+          if (ref.bookId === bookId) {
+            chaptersWithChiasms.add(ref.chapter);
+          }
+          if (ref.endBookId === bookId && ref.endChapter) {
+            chaptersWithChiasms.add(ref.endChapter);
+          }
+        });
+      });
+    });
+
+    return Array.from(chaptersWithChiasms).map(String);
+  } catch (error) {
+    console.error("Error fetching chiasms for book:", error);
+    return [];
+  }
+}
+
+export async function updateChiasm(
+  chiasmId: string,
+  name: string,
+  description: string | null,
+  units: {
+    id?: string;
+    unit_order: number;
+    verse_references: VerseReference | VerseReference[];
+    description?: string | null;
+  }[]
+): Promise<ChiasmWithUnits | null> {
+  try {
+    // Update chiasm
+    const { data: chiasm, error: chiasmError } = await supabase
+      .from("chiasms")
+      .update({
+        name,
+        description,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", chiasmId)
+      .select()
+      .single();
+
+    if (chiasmError) throw chiasmError;
+
+    // Delete existing units
+    await supabase.from("chiasm_units").delete().eq("chiasm_id", chiasmId);
+
+    // Insert new units
+    const unitsToInsert = units.map((unit) => ({
+      chiasm_id: chiasmId,
+      unit_order: unit.unit_order,
+      verse_references: unit.verse_references,
+      description: unit.description || null,
+    }));
+
+    const { data: createdUnits, error: unitsError } = await supabase
+      .from("chiasm_units")
+      .insert(unitsToInsert)
+      .select();
+
+    if (unitsError) throw unitsError;
+
+    return {
+      ...chiasm,
+      units: createdUnits || [],
+    };
+  } catch (error) {
+    console.error("Error updating chiasm:", error);
+    throw error;
+  }
+}
+
+export async function deleteChiasm(chiasmId: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("chiasms")
+      .delete()
+      .eq("id", chiasmId);
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error deleting chiasm:", error);
+    throw error;
   }
 }

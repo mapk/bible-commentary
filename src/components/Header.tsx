@@ -7,13 +7,31 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
-import { fetchCommentaryRequests } from "@/lib/api";
+import { fetchCommentaryRequests, getUserProfile } from "@/lib/api";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { Settings2 } from "lucide-react";
 
-export default function Header() {
+interface HeaderProps {
+  showChiasms?: boolean;
+  onToggleChiasms?: (show: boolean) => void;
+  onCreateChiasm?: () => void;
+}
+
+export default function Header({
+  showChiasms = false,
+  onToggleChiasms,
+  onCreateChiasm,
+}: HeaderProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [requestCount, setRequestCount] = useState(0);
+  const [firstName, setFirstName] = useState<string>("");
 
   useEffect(() => {
     const loadRequestCount = async () => {
@@ -23,6 +41,25 @@ export default function Header() {
       }
     };
     loadRequestCount();
+  }, [user]);
+
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (user?.id) {
+        const profile = await getUserProfile(user.id);
+        // Extract first name from username or email
+        if (profile?.username) {
+          const nameParts = profile.username.split(" ");
+          setFirstName(nameParts[0] || profile.username);
+        } else if (user.user_metadata?.full_name) {
+          const nameParts = user.user_metadata.full_name.split(" ");
+          setFirstName(nameParts[0] || user.user_metadata.full_name);
+        } else if (user.email) {
+          setFirstName(user.email.split("@")[0]);
+        }
+      }
+    };
+    loadUserProfile();
   }, [user]);
 
   const handleLogout = async () => {
@@ -53,25 +90,81 @@ export default function Header() {
               className="w-full md:w-[300px]"
             />
           </form>
-          <Button variant="outline" asChild>
-            <Link href="/about">About</Link>
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Settings2 className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56" align="end">
+              <div className="flex flex-col space-y-2">
+                {onToggleChiasms && (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between pr-2"
+                    onClick={() => onToggleChiasms(!showChiasms)}
+                  >
+                    <span>Show Chiasms</span>
+                    <Switch
+                      id="show-chiasms"
+                      checked={showChiasms}
+                      onCheckedChange={onToggleChiasms}
+                      className="scale-75"
+                    />
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  asChild
+                >
+                  <Link href="/about">About</Link>
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
           {user ? (
-            <>
-              <Button variant="outline" asChild className="relative">
-                <Link href="/requests">
-                  Requests
-                  {requestCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {requestCount}
-                    </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="capitalize">
+                  {firstName || "User"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56" align="end">
+                <div className="flex flex-col space-y-2">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between relative pr-2"
+                    asChild
+                  >
+                    <Link href="/requests">
+                      <span>View Requests</span>
+                      {requestCount > 0 && (
+                        <span className="bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {requestCount}
+                        </span>
+                      )}
+                    </Link>
+                  </Button>
+                  {onCreateChiasm && (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={onCreateChiasm}
+                    >
+                      Create a Chiasm
+                    </Button>
                   )}
-                </Link>
-              </Button>
-              <Button variant="outline" onClick={handleLogout}>
-                Sign out
-              </Button>
-            </>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={handleLogout}
+                  >
+                    Sign out
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           ) : (
             <Button variant="default" asChild>
               <Link href="/login">Sign in</Link>
