@@ -9,7 +9,7 @@ import { ChiasmProvider } from "@/contexts/ChiasmContext";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "Bible Commentary",
+  title: "Tолкование",
   description: "A place for thoughtful commentary on the Bible",
 };
 
