@@ -78,7 +78,7 @@ export default function Header({
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container max-w-screen-xl mx-auto p-4 flex h-20 items-center justify-between">
         <Link href="/" className="text-2xl font-bold">
-          Bible Commentary
+          Tолкование
         </Link>
         <div className="flex items-center space-x-4">
           <form onSubmit={handleSearch} className="flex items-center space-x-2">
