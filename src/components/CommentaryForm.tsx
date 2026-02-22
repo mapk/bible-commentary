@@ -137,6 +137,18 @@ export function CommentaryForm({
     }
   }, [isEditing, commentaryAuthor]);
 
+  // Sync book, chapter, verse when user clicks a different verse (panel stays open)
+  useEffect(() => {
+    if (!isEditing) {
+      setFormData((prev) => ({
+        ...prev,
+        book: currentBook,
+        chapter: isNaN(currentChapter) ? 1 : currentChapter,
+        verse_range: currentVerse.toString(),
+      }));
+    }
+  }, [currentBook, currentChapter, currentVerse, isEditing]);
+
   // If not authenticated, show login message
   if (!user) {
     return (

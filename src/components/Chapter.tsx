@@ -339,17 +339,21 @@ export default function Chapter({
   }, [showChiasms, bookId, currentChapter, verses.length]);
 
   const onClick = async (number: number) => {
+    // Always update selected verse so panel header/content can show the clicked verse
+    setSelectedVerse(number);
+
     // Check if this verse has chiasms
     const verseChiasms = verseChiasmMap.get(number);
     if (showChiasms && verseChiasms && verseChiasms.length > 0) {
-      // Show chiasm details instead of commentary
+      // Show chiasm details for this verse
       setSelectedChiasm(verseChiasms[0].chiasm);
       setIsChiasmDetailsOpen(true);
+      setIsSheetOpen(false);
       return;
     }
 
-    // Otherwise show commentary as usual
-    setSelectedVerse(number);
+    // Show commentary for this verse
+    setIsChiasmDetailsOpen(false);
     setIsSheetOpen(true);
 
     const commentaryData = await fetchCommentary(bookId, currentChapter);
