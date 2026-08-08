@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -33,6 +33,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { InfoIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChiasm } from "@/contexts/ChiasmContext";
+import { MessageCircle } from "lucide-react";
 import { isVerseInReference, type VerseReference } from "@/lib/verse-parser";
 import {
   getChiasticLevel,
@@ -83,7 +84,7 @@ function Verse({
   number,
   onClick,
   selected,
-  hasCommentary,
+  commentaryCount,
   chiasmInfo,
   showChiasms,
   highlighted,
@@ -93,12 +94,13 @@ function Verse({
   number: number;
   onClick: (number: number) => void;
   selected: boolean;
-  hasCommentary: boolean;
+  commentaryCount: number;
   chiasmInfo?: VerseChiasmInfo[];
   showChiasms: boolean;
   highlighted?: boolean;
   registerRef?: (el: HTMLDivElement | null) => void;
 }) {
+  const hasCommentary = commentaryCount > 0;
   // Get the primary chiasm color (use the first one if multiple)
   const primaryChiasm =
     chiasmInfo && chiasmInfo.length > 0 ? chiasmInfo[0] : null;
@@ -139,6 +141,9 @@ function Verse({
         marginLeft: hasChiasm ? `${indentLevel * 1.5}rem` : "0",
       }}
     >
+      {hasCommentary && (
+        <MessageCircle className="absolute -left-5 top-2 h-3.5 w-3.5 text-slate-300" />
+      )}
       <sup className="mr-2 text-slate-500">{number}</sup>
       {children}
       {hasChiasm && chiasmInfo && chiasmInfo.length > 1 && (
@@ -183,12 +188,17 @@ const getChapterFromPath = (path: string | null) => {
 export default function Chapter({
   html,
   bookId,
+  prevLink,
+  nextLink,
 }: {
   html: string;
   bookId: string;
+  prevLink?: string | null;
+  nextLink?: string | null;
 }) {
   const { user } = useAuth();
   const { showChiasms } = useChiasm();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const verseParam = searchParams.get("verse");
   const deepLinkAppliedRef = useRef<string | null>(null);
@@ -202,8 +212,10 @@ export default function Chapter({
   } | null>(null);
   const [commentary, setCommentary] = useState<Commentary[]>([]);
   const [currentChapter, setCurrentChapter] = useState(1);
-  const [versesWithCommentary, setVersesWithCommentary] = useState<Set<number>>(
-    new Set()
+  const [versesWithCommentary, setVersesWithCommentary] = useState<
+    Map<number, number>
+  >(
+    new Map()
   );
   const [requestedVerses, setRequestedVerses] = useState<Set<number>>(
     new Set()
@@ -236,14 +248,14 @@ export default function Chapter({
     setVerses(verses);
 
     // Reset verses with commentary when html changes
-    setVersesWithCommentary(new Set());
+    setVersesWithCommentary(new Map());
 
     // Load commentary for the new chapter
     const loadCommentary = async () => {
       const path = window.location.pathname;
       const chapterNum = getChapterFromPath(path);
       const allCommentary = await fetchCommentary(bookId, chapterNum);
-      const versesWithComments = new Set<number>();
+      const versesWithComments = new Map<number, number>();
 
       allCommentary.forEach((comment) => {
         if (!comment.verse_range) return;
@@ -251,10 +263,11 @@ export default function Chapter({
         if (comment.verse_range.includes("-")) {
           const [start, end] = comment.verse_range.split("-").map(Number);
           for (let verse = start; verse <= end; verse++) {
-            versesWithComments.add(verse);
+            versesWithComments.set(verse, (versesWithComments.get(verse) || 0) + 1);
           }
         } else {
-          versesWithComments.add(Number(comment.verse_range));
+          const verse = Number(comment.verse_range);
+          versesWithComments.set(verse, (versesWithComments.get(verse) || 0) + 1);
         }
       });
 
@@ -379,6 +392,32 @@ export default function Chapter({
 
     loadChiasms();
   }, [showChiasms, bookId, currentChapter, verses.length]);
+
+  // Arrow-key chapter navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+
+      if (isSheetOpen || isChiasmDetailsOpen || isChiasmFormOpen) return;
+
+      const href = e.key === "ArrowLeft" ? prevLink : nextLink;
+      if (href) router.push(href);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [prevLink, nextLink, isSheetOpen, isChiasmDetailsOpen, isChiasmFormOpen, router]);
 
   const onClick = async (number: number) => {
     // Always update selected verse so panel header/content can show the clicked verse
@@ -627,17 +666,18 @@ export default function Chapter({
       );
       setCommentary(relevantCommentary);
 
-      // Update the verses with commentary set
-      const versesWithComments = new Set<number>();
+      // Update the verses with commentary counts
+      const versesWithComments = new Map<number, number>();
       commentaryData.forEach((comment) => {
         if (!comment.verse_range) return;
         if (comment.verse_range.includes("-")) {
           const [start, end] = comment.verse_range.split("-").map(Number);
           for (let verse = start; verse <= end; verse++) {
-            versesWithComments.add(verse);
+            versesWithComments.set(verse, (versesWithComments.get(verse) || 0) + 1);
           }
         } else {
-          versesWithComments.add(Number(comment.verse_range));
+          const verse = Number(comment.verse_range);
+          versesWithComments.set(verse, (versesWithComments.get(verse) || 0) + 1);
         }
       });
       setVersesWithCommentary(versesWithComments);
@@ -763,7 +803,7 @@ export default function Chapter({
           number={verse.number}
           onClick={onClick}
           selected={verse.number === selectedVerse}
-          hasCommentary={versesWithCommentary.has(verse.number)}
+          commentaryCount={versesWithCommentary.get(verse.number) || 0}
           chiasmInfo={verseChiasmMap.get(verse.number)}
           showChiasms={showChiasms}
           highlighted={verse.number === highlightedVerse}

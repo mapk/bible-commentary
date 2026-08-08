@@ -15,12 +15,23 @@ interface Book {
 function ChapterContent({
   bookId,
   chapterNumber,
+  prevLink,
+  nextLink,
 }: {
   bookId: string;
   chapterNumber: string;
+  prevLink: string | null;
+  nextLink: string | null;
 }) {
   const content = use(fetchChapterContent(bookId, parseInt(chapterNumber)));
-  return <Chapter html={content} bookId={bookId} />;
+  return (
+    <Chapter
+      html={content}
+      bookId={bookId}
+      prevLink={prevLink}
+      nextLink={nextLink}
+    />
+  );
 }
 
 export default async function ChapterPage({
@@ -89,7 +100,12 @@ export default async function ChapterPage({
         )}
 
         <div className="w-full">
-          <ChapterContent bookId={bookId} chapterNumber={chapterNumber} />
+          <ChapterContent
+            bookId={bookId}
+            chapterNumber={chapterNumber}
+            prevLink={prevLink}
+            nextLink={nextLink}
+          />
         </div>
 
         {nextLink ? (
