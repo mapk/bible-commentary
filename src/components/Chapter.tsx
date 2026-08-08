@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -8,6 +9,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   fetchCommentary,
   requestCommentary,
@@ -84,6 +86,8 @@ function Verse({
   hasCommentary,
   chiasmInfo,
   showChiasms,
+  highlighted,
+  registerRef,
 }: {
   children: React.ReactNode;
   number: number;
@@ -92,6 +96,8 @@ function Verse({
   hasCommentary: boolean;
   chiasmInfo?: VerseChiasmInfo[];
   showChiasms: boolean;
+  highlighted?: boolean;
+  registerRef?: (el: HTMLDivElement | null) => void;
 }) {
   // Get the primary chiasm color (use the first one if multiple)
   const primaryChiasm =
@@ -117,10 +123,13 @@ function Verse({
 
   return (
     <div
+      ref={registerRef}
       onClick={() => onClick(number)}
       className={`p-2 rounded-lg transition-colors relative ${
         selected ? "bg-slate-100" : "hover:bg-slate-50 hover:text-slate-900"
-      } cursor-pointer ${hasCommentary ? "text-slate-900" : "text-slate-500"}`}
+      } cursor-pointer ${hasCommentary ? "text-slate-900" : "text-slate-500"} ${
+        highlighted ? "animate-pulse bg-yellow-100" : ""
+      }`}
       style={{
         ...(hasChiasm
           ? {
@@ -180,9 +189,17 @@ export default function Chapter({
 }) {
   const { user } = useAuth();
   const { showChiasms } = useChiasm();
+  const searchParams = useSearchParams();
+  const verseParam = searchParams.get("verse");
+  const deepLinkAppliedRef = useRef<string | null>(null);
+  const verseRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const [highlightedVerse, setHighlightedVerse] = useState<number | null>(null);
   const [verses, setVerses] = useState<{ number: number; verse: string }[]>([]);
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    commentaryId: number;
+  } | null>(null);
   const [commentary, setCommentary] = useState<Commentary[]>([]);
   const [currentChapter, setCurrentChapter] = useState(1);
   const [versesWithCommentary, setVersesWithCommentary] = useState<Set<number>>(
@@ -278,6 +295,31 @@ export default function Chapter({
     };
     loadUserProfile();
   }, [user]);
+
+  // Deep-link to a specific verse via ?verse= (from search/requests pages)
+  useEffect(() => {
+    if (!verseParam || verses.length === 0) return;
+
+    const verseNumber = parseInt(verseParam, 10);
+    if (isNaN(verseNumber)) return;
+
+    const linkKey = `${bookId}-${currentChapter}-${verseParam}`;
+    if (deepLinkAppliedRef.current === linkKey) return;
+
+    const exists = verses.some((v) => v.number === verseNumber);
+    if (!exists) return;
+
+    deepLinkAppliedRef.current = linkKey;
+    onClick(verseNumber);
+    setHighlightedVerse(verseNumber);
+    verseRefs.current
+      .get(verseNumber)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    const timeout = setTimeout(() => setHighlightedVerse(null), 1500);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verseParam, verses, bookId, currentChapter]);
 
   // Load chiasms for current chapter
   useEffect(() => {
@@ -560,10 +602,13 @@ export default function Chapter({
     }
   };
 
-  const handleDeleteCommentary = async (commentaryId: number) => {
-    if (!window.confirm("Are you sure you want to delete this commentary?")) {
-      return;
-    }
+  const handleDeleteCommentary = (commentaryId: number) => {
+    setDeleteConfirm({ commentaryId });
+  };
+
+  const confirmDeleteCommentary = async () => {
+    if (!deleteConfirm) return;
+    const { commentaryId } = deleteConfirm;
 
     try {
       // Delete from database
@@ -721,10 +766,28 @@ export default function Chapter({
           hasCommentary={versesWithCommentary.has(verse.number)}
           chiasmInfo={verseChiasmMap.get(verse.number)}
           showChiasms={showChiasms}
+          highlighted={verse.number === highlightedVerse}
+          registerRef={(el) => {
+            if (el) {
+              verseRefs.current.set(verse.number, el);
+            } else {
+              verseRefs.current.delete(verse.number);
+            }
+          }}
         >
           {verse.verse}
         </Verse>
       ))}
+      <ConfirmDialog
+        open={deleteConfirm !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null);
+        }}
+        title="Delete commentary?"
+        description="This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={confirmDeleteCommentary}
+      />
       <ChiasmDetails
         open={isChiasmDetailsOpen}
         onOpenChange={setIsChiasmDetailsOpen}

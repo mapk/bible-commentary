@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -9,6 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { getChiasticLevel, getChiasticBackgroundColor } from "@/lib/chiasm-colors";
 import type { ChiasmWithUnits, ChiasmUnit } from "@/lib/api";
 import type { VerseReference } from "@/lib/verse-parser";
@@ -32,17 +34,12 @@ export function ChiasmDetails({
 }: ChiasmDetailsProps) {
   const { user } = useAuth();
   const isOwner = user && chiasm && user.id === chiasm.user_id;
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   if (!chiasm) return null;
 
   const handleDelete = () => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete "${chiasm.name}"? This action cannot be undone.`
-      )
-    ) {
-      onDelete?.(chiasm.id);
-    }
+    setIsDeleteConfirmOpen(true);
   };
 
   const maxLevel = Math.floor(chiasm.units.length / 2);
@@ -103,6 +100,7 @@ export function ChiasmDetails({
   };
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
       <SheetContent side="right" className="flex flex-col h-full">
         <SheetHeader className="mb-4 pb-4 border-b shrink-0">
@@ -203,6 +201,15 @@ export function ChiasmDetails({
         )}
       </SheetContent>
     </Sheet>
+    <ConfirmDialog
+      open={isDeleteConfirmOpen}
+      onOpenChange={setIsDeleteConfirmOpen}
+      title={`Delete "${chiasm.name}"?`}
+      description="This action cannot be undone."
+      confirmLabel="Delete"
+      onConfirm={() => onDelete?.(chiasm.id)}
+    />
+    </>
   );
 }
 

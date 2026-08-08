@@ -15,6 +15,7 @@ import { fetchBibleBooks, fetchChapters, getUserProfile } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface CommentaryFormProps {
   currentBook: string;
@@ -46,6 +47,7 @@ export function CommentaryForm({
   verseRange,
 }: CommentaryFormProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const isSuperAdmin = user?.email === "uraine@gmail.com";
   const [books, setBooks] = useState<{ id: string; name: string }[]>([]);
   const [chapters, setChapters] = useState<number[]>([]);
@@ -185,6 +187,11 @@ export function CommentaryForm({
           chapter: isNaN(currentChapter) ? 1 : currentChapter,
           verse_range: currentVerse.toString(),
           commentary_text: "",
+        });
+
+        toast({
+          title: "Commentary Added",
+          description: "Your commentary has been saved successfully.",
         });
 
         // Refresh commentary list

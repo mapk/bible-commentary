@@ -90,9 +90,7 @@ export default function SearchPage() {
                     <Link
                       href={`/book/${encodeURIComponent(
                         result.bookId
-                      )}/chapter/${result.chapter}${
-                        query.includes(":") ? `?verse=${result.verse}` : ""
-                      }`}
+                      )}/chapter/${result.chapter}?verse=${result.verse}`}
                     >
                       <span className="font-medium">
                         {result.book} {result.chapter}:{result.verse}

@@ -94,36 +94,40 @@ export async function fetchChapter(
   chapter: number
 ): Promise<ChapterData> {
   try {
-    const response = await fetch(
-      `https://api.scripture.api.bible/v1/bibles/${BIBLE_ID}/verses?chapter.id=${bookId}.${chapter}`,
-      {
-        headers: {
-          "api-key": API_KEY,
-        },
-      }
-    );
+    const html = await fetchChapterContent(bookId, chapter);
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch chapter");
+    if (!html || typeof DOMParser === "undefined") {
+      throw new Error("No chapter content returned from API");
     }
 
-    const data = await response.json();
+    // Parse verses out of the chapter HTML (same shape as Chapter.tsx's client-side parsing)
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const verses: Verse[] = [];
+    let current: Verse | null = null;
 
-    if (!data.data) {
-      throw new Error("No data returned from API");
+    doc.querySelectorAll("p").forEach((para) => {
+      para.childNodes.forEach((node) => {
+        if (node.nodeName === "SPAN") {
+          const el = node as Element;
+          const verseNumber = el.getAttribute("data-number");
+          if (verseNumber) {
+            current = { number: parseInt(verseNumber), text: "" };
+            verses.push(current);
+          } else if (current) {
+            current.text += node.textContent?.trim() || "";
+          }
+        } else if (node.nodeType === Node.TEXT_NODE && current) {
+          current.text += node.textContent || "";
+        }
+      });
+    });
+
+    if (verses.length === 0) {
+      throw new Error("No verses parsed from chapter content");
     }
 
-    // Transform the API response into our verse format
-    const verses = data.data.map(
-      (verse: { id: string; reference: string; text: string }) => ({
-        number: parseInt(verse.id.split(".").pop() || "0"),
-        text: verse.text,
-      })
-    );
-
-    return {
-      verses: verses,
-    };
+    return { verses };
   } catch (error) {
     console.error("Error fetching chapter:", error);
     throw error;
