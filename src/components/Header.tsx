@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { fetchCommentaryRequests, getUserProfile } from "@/lib/api";
 import {
   Popover,
@@ -29,9 +30,15 @@ export default function Header({
 }: HeaderProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [requestCount, setRequestCount] = useState(0);
   const [firstName, setFirstName] = useState<string>("");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const loadRequestCount = async () => {
@@ -109,6 +116,25 @@ export default function Header({
                       id="show-chiasms"
                       checked={showChiasms}
                       onCheckedChange={onToggleChiasms}
+                      className="scale-75"
+                    />
+                  </Button>
+                )}
+                {mounted && (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between pr-2"
+                    onClick={() =>
+                      setTheme(theme === "dark" ? "light" : "dark")
+                    }
+                  >
+                    <span>Dark Mode</span>
+                    <Switch
+                      id="dark-mode"
+                      checked={theme === "dark"}
+                      onCheckedChange={(checked) =>
+                        setTheme(checked ? "dark" : "light")
+                      }
                       className="scale-75"
                     />
                   </Button>

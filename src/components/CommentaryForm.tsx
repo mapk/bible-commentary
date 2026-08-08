@@ -154,7 +154,7 @@ export function CommentaryForm({
   // If not authenticated, show login message
   if (!user) {
     return (
-      <p className="text-slate-600 hidden">Please sign in to add commentary</p>
+      <p className="text-muted-foreground hidden">Please sign in to add commentary</p>
     );
   }
 
@@ -206,11 +206,11 @@ export function CommentaryForm({
   };
 
   return (
-    <Card className="border-none shadow-none pt-6 bg-slate-100">
+    <Card className="border-none shadow-none pt-6 bg-muted">
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+            <div className="bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300 p-3 rounded-md text-sm">
               {error}
             </div>
           )}
@@ -222,7 +222,7 @@ export function CommentaryForm({
                   placeholder={loadingProfile ? "Loading..." : "Your Name"}
                   value={formData.commentary_author}
                   disabled={!isSuperAdmin}
-                  className="bg-slate-50"
+                  className="bg-background"
                   onChange={
                     isSuperAdmin
                       ? (e) =>
@@ -297,7 +297,7 @@ export function CommentaryForm({
           )}
           {isEditing && (
             <div className="space-y-2">
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 {books.find((b) => b.id === currentBook)?.name} {currentChapter}
                 :{verseRange}
               </p>

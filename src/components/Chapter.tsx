@@ -128,9 +128,13 @@ function Verse({
       ref={registerRef}
       onClick={() => onClick(number)}
       className={`p-2 rounded-lg transition-colors relative ${
-        selected ? "bg-slate-100" : "hover:bg-slate-50 hover:text-slate-900"
-      } cursor-pointer ${hasCommentary ? "text-slate-900" : "text-slate-500"} ${
-        highlighted ? "animate-pulse bg-yellow-100" : ""
+        selected
+          ? "bg-muted"
+          : "hover:bg-accent hover:text-accent-foreground"
+      } cursor-pointer ${
+        hasCommentary ? "text-foreground" : "text-muted-foreground"
+      } ${
+        highlighted ? "animate-pulse bg-yellow-100 dark:bg-yellow-900/40" : ""
       }`}
       style={{
         ...(hasChiasm
@@ -142,12 +146,12 @@ function Verse({
       }}
     >
       {hasCommentary && (
-        <MessageCircle className="absolute -left-5 top-2 h-3.5 w-3.5 text-slate-300" />
+        <MessageCircle className="absolute -left-5 top-2 h-3.5 w-3.5 text-muted-foreground/60" />
       )}
-      <sup className="mr-2 text-slate-500">{number}</sup>
+      <sup className="mr-2 text-muted-foreground">{number}</sup>
       {children}
       {hasChiasm && chiasmInfo && chiasmInfo.length > 1 && (
-        <span className="absolute top-1 right-1 text-xs bg-slate-700 text-white rounded-full w-5 h-5 flex items-center justify-center">
+        <span className="absolute top-1 right-1 text-xs bg-foreground text-background rounded-full w-5 h-5 flex items-center justify-center">
           {chiasmInfo.length}
         </span>
       )}
@@ -703,12 +707,12 @@ export default function Chapter({
       // Check if this verse has already been requested
       if (requestedVerses.has(selectedVerse)) {
         return (
-          <Alert className="bg-yellow-50 border-yellow-200">
-            <InfoIcon className="h-4 w-4 text-yellow-900" />
-            <AlertTitle className="mt-1 text-yellow-900">
+          <Alert className="bg-yellow-50 border-yellow-200 dark:bg-yellow-950 dark:border-yellow-900">
+            <InfoIcon className="h-4 w-4 text-yellow-900 dark:text-yellow-200" />
+            <AlertTitle className="mt-1 text-yellow-900 dark:text-yellow-200">
               Commentary has been requested!
             </AlertTitle>
-            <AlertDescription className="text-yellow-900 text-sm">
+            <AlertDescription className="text-yellow-900 dark:text-yellow-200 text-sm">
               The commentators have been notified. Someone will respond soon.
             </AlertDescription>
           </Alert>
@@ -717,12 +721,12 @@ export default function Chapter({
 
       return (
         <div className="text-center py-4">
-          <p className="text-slate-400 mb-4">
+          <p className="text-muted-foreground mb-4">
             No commentary available for this verse.
           </p>
           <Button
             variant="link"
-            className="text-blue-600"
+            className="text-blue-600 dark:text-blue-400"
             onClick={() => handleRequestCommentary(selectedVerse)}
           >
             Request Commentary
@@ -736,16 +740,16 @@ export default function Chapter({
         {commentary.map((comment, index) => (
           <Card
             key={comment.id}
-            className="text-slate-600 group relative animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300"
+            className="text-muted-foreground group relative animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300"
             style={{ animationDelay: `${index * 60}ms` }}
           >
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
-                <CardTitle className="text-base text-slate-900">
+                <CardTitle className="text-base text-foreground">
                   {comment.commentary_author}
                   {comment.verse_range &&
                     comment.verse_range !== selectedVerse?.toString() && (
-                      <span className="text-sm font-normal text-slate-500 ml-2">
+                      <span className="text-sm font-normal text-muted-foreground ml-2">
                         (verses {comment.verse_range})
                       </span>
                     )}
@@ -754,7 +758,7 @@ export default function Chapter({
                   <Button
                     variant="link"
                     size="sm"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-0 h-auto text-blue-600 hover:text-blue-800 hover:no-underline"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-0 h-auto text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:no-underline"
                     onClick={() => handleEditCommentary(comment)}
                   >
                     Edit
@@ -782,7 +786,7 @@ export default function Chapter({
                     variant="link"
                     size="sm"
                     onClick={() => handleDeleteCommentary(comment.id)}
-                    className="mt-2 text-red-500"
+                    className="mt-2 text-destructive"
                   >
                     Delete
                   </Button>
@@ -864,8 +868,8 @@ export default function Chapter({
             </SheetDescription>
           </SheetHeader>
           <div className="flex flex-col gap-4 overflow-y-auto">
-            <Card className="border-none shadow-none pt-6 bg-slate-100">
-              <CardTitle className="text-base text-slate-900 px-6">
+            <Card className="border-none shadow-none pt-6 bg-muted">
+              <CardTitle className="text-base text-foreground px-6">
                 {selectedVerse !== null && (
                   <span className="font-semibold">
                     {formatBookName(bookId)} {currentChapter}
@@ -875,7 +879,7 @@ export default function Chapter({
               </CardTitle>
               <CardContent>
                 {selectedVerse !== null && (
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-muted-foreground">
                     {verses.find((v) => v.number === selectedVerse)?.verse}
                   </p>
                 )}
