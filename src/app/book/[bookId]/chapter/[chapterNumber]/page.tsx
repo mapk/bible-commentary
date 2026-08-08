@@ -66,33 +66,53 @@ export default async function ChapterPage({
       </h1>
 
       <div className="flex-grow flex">
-        <Button
-          variant="outline"
-          size="icon"
-          asChild
-          disabled={!prevLink}
-          className="fixed left-8 py-12 top-1/2 transform -translate-y-1/2"
-        >
-          <Link href={prevLink || "#"}>
+        {prevLink ? (
+          <Button
+            variant="outline"
+            size="icon"
+            asChild
+            className="fixed left-8 py-12 top-1/2 transform -translate-y-1/2"
+          >
+            <Link href={prevLink}>
+              <ChevronLeft className="h-6 w-6" />
+            </Link>
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="icon"
+            disabled
+            className="fixed left-8 py-12 top-1/2 transform -translate-y-1/2"
+          >
             <ChevronLeft className="h-6 w-6" />
-          </Link>
-        </Button>
+          </Button>
+        )}
 
         <div className="w-full">
           <ChapterContent bookId={bookId} chapterNumber={chapterNumber} />
         </div>
 
-        <Button
-          variant="outline"
-          size="icon"
-          asChild
-          disabled={!nextLink}
-          className="fixed right-8 py-12 top-1/2 transform -translate-y-1/2"
-        >
-          <Link href={nextLink || "#"}>
+        {nextLink ? (
+          <Button
+            variant="outline"
+            size="icon"
+            asChild
+            className="fixed right-8 py-12 top-1/2 transform -translate-y-1/2"
+          >
+            <Link href={nextLink}>
+              <ChevronRight className="h-6 w-6" />
+            </Link>
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="icon"
+            disabled
+            className="fixed right-8 py-12 top-1/2 transform -translate-y-1/2"
+          >
             <ChevronRight className="h-6 w-6" />
-          </Link>
-        </Button>
+          </Button>
+        )}
       </div>
     </div>
   );
