@@ -733,8 +733,12 @@ export default function Chapter({
 
     return (
       <div className="space-y-4">
-        {commentary.map((comment) => (
-          <Card key={comment.id} className="text-slate-600 group relative">
+        {commentary.map((comment, index) => (
+          <Card
+            key={comment.id}
+            className="text-slate-600 group relative animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300"
+            style={{ animationDelay: `${index * 60}ms` }}
+          >
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
                 <CardTitle className="text-base text-slate-900">
@@ -797,27 +801,32 @@ export default function Chapter({
 
   return (
     <div className="flex flex-col">
-      {verses.map((verse) => (
-        <Verse
-          key={verse.number}
-          number={verse.number}
-          onClick={onClick}
-          selected={verse.number === selectedVerse}
-          commentaryCount={versesWithCommentary.get(verse.number) || 0}
-          chiasmInfo={verseChiasmMap.get(verse.number)}
-          showChiasms={showChiasms}
-          highlighted={verse.number === highlightedVerse}
-          registerRef={(el) => {
-            if (el) {
-              verseRefs.current.set(verse.number, el);
-            } else {
-              verseRefs.current.delete(verse.number);
-            }
-          }}
-        >
-          {verse.verse}
-        </Verse>
-      ))}
+      <div
+        key={html}
+        className="flex flex-col animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+      >
+        {verses.map((verse) => (
+          <Verse
+            key={verse.number}
+            number={verse.number}
+            onClick={onClick}
+            selected={verse.number === selectedVerse}
+            commentaryCount={versesWithCommentary.get(verse.number) || 0}
+            chiasmInfo={verseChiasmMap.get(verse.number)}
+            showChiasms={showChiasms}
+            highlighted={verse.number === highlightedVerse}
+            registerRef={(el) => {
+              if (el) {
+                verseRefs.current.set(verse.number, el);
+              } else {
+                verseRefs.current.delete(verse.number);
+              }
+            }}
+          >
+            {verse.verse}
+          </Verse>
+        ))}
+      </div>
       <ConfirmDialog
         open={deleteConfirm !== null}
         onOpenChange={(open) => {
