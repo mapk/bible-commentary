@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchCommentaryRequests, fetchBibleBooks } from "@/lib/api";
+import {
+  fetchCommentaryRequests,
+  fetchBibleBooks,
+  stripParagraphMarkers,
+} from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -82,7 +86,7 @@ export default function RequestsPage() {
 
               return {
                 ...request,
-                verse_text: response.data.data.content,
+                verse_text: stripParagraphMarkers(response.data.data.content),
                 book_name: bookData.name,
               };
             } catch (err) {

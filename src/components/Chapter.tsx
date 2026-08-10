@@ -23,6 +23,7 @@ import {
   deleteChiasm,
   type ChiasmWithUnits,
   type ChiasmUnit,
+  stripParagraphMarkers,
 } from "@/lib/api";
 import { CommentaryForm } from "@/components/CommentaryForm";
 import { ChiasmDetails } from "@/components/ChiasmDetails";
@@ -59,13 +60,14 @@ function extractBibleVerses(html: string) {
           };
           verses.push(verse);
         } else {
-          const text = node.textContent?.trim();
+          const text = stripParagraphMarkers(node.textContent?.trim() || "");
           if (text) {
             verse.verse = (verse.verse || "") + text;
           }
         }
       } else if (node.nodeType === Node.TEXT_NODE) {
-        verse.verse = (verse.verse || "") + node.textContent;
+        verse.verse =
+          (verse.verse || "") + stripParagraphMarkers(node.textContent || "");
       }
     });
   }

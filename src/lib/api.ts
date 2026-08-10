@@ -11,6 +11,12 @@ const api = axios.create({
   headers: { "api-key": API_KEY },
 });
 
+// The KJV source text from api.bible marks paragraph breaks with a literal
+// pilcrow (¶) inline with the verse text — strip it, it's not meant to render.
+export function stripParagraphMarkers(text: string): string {
+  return text.replace(/¶\s*/g, "");
+}
+
 export interface SearchResult {
   book: string;
   chapter: number;
@@ -115,10 +121,12 @@ export async function fetchChapter(
             current = { number: parseInt(verseNumber), text: "" };
             verses.push(current);
           } else if (current) {
-            current.text += node.textContent?.trim() || "";
+            current.text += stripParagraphMarkers(
+              node.textContent?.trim() || ""
+            );
           }
         } else if (node.nodeType === Node.TEXT_NODE && current) {
-          current.text += node.textContent || "";
+          current.text += stripParagraphMarkers(node.textContent || "");
         }
       });
     });
@@ -280,7 +288,7 @@ export async function fetchSearchResults(
             book: fullBook?.name || bookName,
             chapter: parseInt(chapter),
             verse: parseInt(verseNum),
-            text: highlightKeywords(verse.text, query),
+            text: highlightKeywords(stripParagraphMarkers(verse.text), query),
             bookId: fullBook?.id || bookName.toLowerCase(),
           };
         }
