@@ -214,6 +214,31 @@ export async function normalizeVerseReference(
 }
 
 /**
+ * Check whether a reference covers any verse in a chapter
+ */
+export function referenceIncludesChapter(
+  bookId: string,
+  chapter: number,
+  reference: VerseReference
+): boolean {
+  if (reference.bookId === bookId && reference.chapter === chapter) {
+    return true;
+  }
+  if (reference.endBookId === bookId && reference.endChapter === chapter) {
+    return true;
+  }
+
+  // Middle chapters of a range within one book
+  return (
+    reference.bookId === bookId &&
+    reference.endBookId === bookId &&
+    reference.endChapter !== undefined &&
+    chapter > reference.chapter &&
+    chapter < reference.endChapter
+  );
+}
+
+/**
  * Check if a verse (book, chapter, verse) is included in a verse reference
  */
 export function isVerseInReference(
