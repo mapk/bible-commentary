@@ -19,6 +19,10 @@ interface ChapterWithCount {
   hasChiasm: boolean;
 }
 
+const CHAPTER_STAGGER_MS = 20;
+// Long books share this budget so Psalms (150 chapters) doesn't take seconds.
+const MAX_TOTAL_STAGGER_MS = 600;
+
 export function ChapterList({ bookId, name }: ChapterListProps) {
   const { showChiasms } = useChiasm();
   const [chapters, setChapters] = useState<ChapterWithCount[]>([]);
@@ -62,16 +66,23 @@ export function ChapterList({ bookId, name }: ChapterListProps) {
     loadChaptersWithCommentary();
   }, [bookId, showChiasms]);
 
+  const staggerMs = Math.min(
+    CHAPTER_STAGGER_MS,
+    MAX_TOTAL_STAGGER_MS / Math.max(chapters.length, 1)
+  );
+
   return (
     <div className="">
       <h1 className="text-2xl font-bold my-8">{name}</h1>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {chapters.map((chapter) => (
+        {chapters.map((chapter, index) => (
           <Link
             key={chapter.number}
             href={`/book/${encodeURIComponent(bookId)}/chapter/${
               chapter.number
             }`}
+            className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:fill-mode-both motion-safe:duration-300"
+            style={{ animationDelay: `${index * staggerMs}ms` }}
           >
             <Button variant="secondary" className="w-full relative">
               <span>Chapter {chapter.number}</span>
