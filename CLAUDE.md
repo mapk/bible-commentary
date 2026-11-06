@@ -112,7 +112,7 @@ CHIASM_SETUP.md             Chiasm feature notes
 
 ## Backups
 
-The Supabase Free plan has no automatic backups, so `scripts/backup.mjs` saves `commentary`, `chiasms`, and `chiasm_units` to `backups/<timestamp>/` as JSON. `scripts/schedule-backup.sh` runs it daily at 3:00 on the owner's Mac through launchd (pass `remove` to stop it).
+The Supabase Free plan has no automatic backups, so `scripts/backup.mjs` saves `commentary`, `chiasms`, and `chiasm_units` to `backups/<timestamp>/` as JSON. `scripts/schedule-backup.sh` runs it on the 1st of each month at 3:00 on the owner's Mac through launchd (pass `remove` to stop it). If the Mac is off then, that month is skipped, so run `npm run backup` by hand.
 
 - It uses the anon key, so `profiles`, `admins`, and `commentary_requests` aren't included. Don't add a `service_role` key to get them.
 - A new folder is written only when data changed, and nothing is ever deleted. Failures and shrinking tables raise a macOS notification and are logged to `backups/backup.log`.

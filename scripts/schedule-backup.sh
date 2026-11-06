@@ -1,6 +1,7 @@
 #!/bin/sh
-# Schedules scripts/backup.mjs to run daily at 3:00 on this Mac. If the Mac is
-# asleep then, macOS runs it on wake. If the Mac is off, that run is skipped.
+# Schedules scripts/backup.mjs to run on the 1st of each month at 3:00 on this
+# Mac. If the Mac is asleep then, macOS runs it on wake. If the Mac is off, that
+# month's run is skipped.
 #
 #   sh scripts/schedule-backup.sh          install or update
 #   sh scripts/schedule-backup.sh remove   stop scheduled backups
@@ -35,6 +36,7 @@ cat > "$PLIST" <<PLIST
   </array>
   <key>StartCalendarInterval</key>
   <dict>
+    <key>Day</key><integer>1</integer>
     <key>Hour</key><integer>3</integer>
     <key>Minute</key><integer>0</integer>
   </dict>
@@ -45,4 +47,4 @@ cat > "$PLIST" <<PLIST
 PLIST
 
 launchctl bootstrap "$DOMAIN" "$PLIST"
-echo "Backups scheduled daily at 3:00 using $NODE"
+echo "Backups scheduled for the 1st of each month at 3:00 using $NODE"

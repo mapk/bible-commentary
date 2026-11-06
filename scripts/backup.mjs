@@ -1,5 +1,5 @@
 // Saves the publicly readable tables to backups/<timestamp>/ as JSON.
-// Run with `npm run backup`; scripts/schedule-backup.sh runs it daily.
+// Run with `npm run backup`; scripts/schedule-backup.sh runs it monthly.
 //
 // Uses the anon key, so it only sees what RLS shows anonymous readers. Never
 // add a service_role key here. A new folder is written only when the data has
