@@ -132,7 +132,11 @@ function Verse({
           ? "bg-muted"
           : "hover:bg-accent hover:text-accent-foreground"
       } cursor-pointer ${
-        hasCommentary ? "text-foreground" : "text-muted-foreground"
+        hasCommentary
+          ? "text-foreground"
+          : hasChiasm
+          ? "text-foreground/80"
+          : "text-muted-foreground"
       } ${
         highlighted ? "animate-pulse bg-yellow-100 dark:bg-yellow-900/40" : ""
       }`}
@@ -148,7 +152,13 @@ function Verse({
       {hasCommentary && (
         <MessageCircle className="absolute -left-5 top-2 h-3.5 w-3.5 text-muted-foreground/60" />
       )}
-      <sup className="mr-2 text-muted-foreground">{number}</sup>
+      <sup
+        className={`mr-2 ${
+          hasChiasm ? "text-foreground/70" : "text-muted-foreground"
+        }`}
+      >
+        {number}
+      </sup>
       {children}
       {hasChiasm && chiasmInfo && chiasmInfo.length > 1 && (
         <span className="absolute top-1 right-1 text-xs bg-foreground text-background rounded-full w-5 h-5 flex items-center justify-center">

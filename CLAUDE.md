@@ -65,6 +65,7 @@ src/components/
   ChiasmForm.tsx            Create and edit chiasms
   ChiasmDetails.tsx         Chiasm side panel
   Header.tsx, HeaderWrapper.tsx   Nav, settings popover, chiasm toggle
+  ThemeSelector.tsx         Light, dark, or system theme picker in the settings popover
   ui/                       shadcn primitives
 src/contexts/               AuthContext (useAuth: user, loading, isAdmin), ChiasmContext (useChiasm, stored in sessionStorage)
 src/lib/
