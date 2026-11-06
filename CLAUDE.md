@@ -14,7 +14,7 @@ Treat this as religious community content. Don't rewrite, reword, or generate co
 
 ## Stack
 
-- Next.js 14.2 App Router, React 18, TypeScript (`strict`)
+- Next.js 15.5 App Router, React 18 in `package.json`, TypeScript (`strict`)
 - Tailwind CSS 3 with shadcn/ui (Radix) in `src/components/ui`, `lucide-react` icons
 - `next-themes` for dark mode (class strategy), local Geist fonts through `next/font`
 - Supabase: Postgres, Auth, and RLS. The browser talks to it directly using the anon key.
@@ -115,6 +115,7 @@ CHIASM_SETUP.md             Chiasm feature notes
 - **CDN caching:** Netlify's CDN ignores query strings on these responses. Never set a shared cache header on a response that depends on its query string.
 - **Types:** export shared types from `api.ts` or `verse-parser.ts`. Avoid `any`.
 - **Server vs client:** most UI is `"use client"` because auth and Supabase are browser-side. There is no server-side session, so server components can't see the current user.
+- **Route params:** `params` is a Promise in Next 15, so `await` it in pages and route handlers.
 - **Imports:** use the `@/` alias for `src/`.
 - **UI:** reuse `src/components/ui` first. Add primitives with the shadcn CLI, and merge classes with `cn()`.
 - **Styling:** use semantic tokens (`bg-background`, `text-muted-foreground`, `border-border`) from `globals.css` so dark mode works. Avoid fixed colors like `text-slate-400` or `bg-white` in new code; any exception needs a `dark:` variant.
@@ -144,10 +145,10 @@ Don't copy these patterns. Fix them only when asked or when working in that area
 
 - **Old API.Bible key in git history:** treat any key found in history as compromised. It must never be reused.
 - **Public `/api/bible` proxy:** it's limited to KJV reads and CDN-cached, but has no rate limit. Commentary requests also accept anonymous inserts without one, so spam is possible.
-- **Outdated dependencies:** `npm audit` reports open vulnerabilities, including in `next`.
+- **Dev-only audit findings:** `npm audit` reports lint tooling issues through `eslint-config-next`. `npm audit --omit=dev` should stay at 0.
+- **`postcss` override:** `package.json` overrides the copy bundled with `next`. Remove the override once `next` ships a patched version.
 - **Chiasm lookups:** `fetchChiasmsForChapter` and `fetchChiasmsForBook` load every chiasm and filter in the client, with one query per chiasm for units. Middle chapters of a multi-chapter range are missed, since only start and end chapters are matched.
 - **`updateChiasm` isn't atomic:** it deletes then re-inserts units, and doesn't check the delete's error. A failed insert can lose units.
-- **Chapter page directive:** the page has a top-level `"use server"`, which isn't the correct directive for a server component page.
 - **Docs drift:** `README.md` is mostly the create-next-app template.
 
 ## Git workflow

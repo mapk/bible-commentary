@@ -12,10 +12,11 @@ interface Book {
 export default async function BookPage({
   params,
 }: {
-  params: { bookId: string };
+  params: Promise<{ bookId: string }>;
 }) {
+  const { bookId } = await params;
   const books: Book[] = await fetchBibleBooks();
-  const currentBookIndex = books.findIndex((b: Book) => b.id === params.bookId);
+  const currentBookIndex = books.findIndex((b: Book) => b.id === bookId);
   const book = books[currentBookIndex];
 
   const prevLink =
@@ -51,7 +52,7 @@ export default async function BookPage({
         )}
 
         <div className="w-full">
-          <ChapterList bookId={params.bookId} name={book?.name} />
+          <ChapterList bookId={bookId} name={book?.name} />
         </div>
 
         {nextLink ? (
