@@ -62,8 +62,14 @@ export async function GET(
     );
   }
 
-  // Scripture text doesn't change, so let the CDN absorb repeat requests.
+  // Scripture text doesn't change, so let the CDN absorb repeat requests. The
+  // Netlify CDN ignores query strings here, so caching a response that depends
+  // on them would serve it for every other query.
+  const cacheable = request.nextUrl.search === "" && path !== "search";
+
   return NextResponse.json(await response.json(), {
-    headers: { "Cache-Control": "public, s-maxage=86400" },
+    headers: {
+      "Cache-Control": cacheable ? "public, s-maxage=86400" : "no-store",
+    },
   });
 }
