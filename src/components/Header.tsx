@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
 import { fetchCommentaryRequests, getUserProfile } from "@/lib/api";
 import {
   Popover,
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Settings2 } from "lucide-react";
+import { ThemeSelector } from "@/components/ThemeSelector";
 
 interface HeaderProps {
   showChiasms?: boolean;
@@ -30,15 +30,9 @@ export default function Header({
 }: HeaderProps) {
   const { user } = useAuth();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [requestCount, setRequestCount] = useState(0);
   const [firstName, setFirstName] = useState<string>("");
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const loadRequestCount = async () => {
@@ -99,18 +93,14 @@ export default function Header({
           </form>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" aria-label="Settings">
                 <Settings2 className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-56" align="end">
               <div className="flex flex-col space-y-2">
                 {onToggleChiasms && (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-between pr-2"
-                    onClick={() => onToggleChiasms(!showChiasms)}
-                  >
+                  <label className="flex h-10 w-full cursor-pointer items-center justify-between rounded-md border border-input bg-background pl-4 pr-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground">
                     <span>Show Chiasms</span>
                     <Switch
                       id="show-chiasms"
@@ -118,27 +108,9 @@ export default function Header({
                       onCheckedChange={onToggleChiasms}
                       className="scale-75"
                     />
-                  </Button>
+                  </label>
                 )}
-                {mounted && (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-between pr-2"
-                    onClick={() =>
-                      setTheme(theme === "dark" ? "light" : "dark")
-                    }
-                  >
-                    <span>Dark Mode</span>
-                    <Switch
-                      id="dark-mode"
-                      checked={theme === "dark"}
-                      onCheckedChange={(checked) =>
-                        setTheme(checked ? "dark" : "light")
-                      }
-                      className="scale-75"
-                    />
-                  </Button>
-                )}
+                <ThemeSelector />
                 <Button
                   variant="outline"
                   className="w-full justify-start"
