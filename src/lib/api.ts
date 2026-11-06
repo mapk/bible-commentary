@@ -1,7 +1,7 @@
 import axios from "axios";
 import { supabase } from "./supabase";
 import { BIBLE_API_URL, BIBLE_ID } from "./bible-config";
-import type { VerseReference } from "./verse-parser";
+import { referenceIncludesChapter, type VerseReference } from "./verse-parser";
 
 // On the server, call API.Bible directly. In the browser, go through
 // /api/bible so the key never reaches the client.
@@ -512,32 +512,19 @@ export async function createChiasm(
 
 export async function fetchChiasms(): Promise<ChiasmWithUnits[]> {
   try {
-    const { data: chiasms, error: chiasmsError } = await supabase
+    const { data: chiasms, error } = await supabase
       .from("chiasms")
-      .select("*")
+      .select("*, units:chiasm_units(*)")
       .order("created_at", { ascending: false });
 
-    if (chiasmsError) throw chiasmsError;
+    if (error) throw error;
 
-    // Fetch units for each chiasm
-    const chiasmsWithUnits = await Promise.all(
-      (chiasms || []).map(async (chiasm) => {
-        const { data: units, error: unitsError } = await supabase
-          .from("chiasm_units")
-          .select("*")
-          .eq("chiasm_id", chiasm.id)
-          .order("unit_order", { ascending: true });
-
-        if (unitsError) throw unitsError;
-
-        return {
-          ...chiasm,
-          units: units || [],
-        };
-      })
-    );
-
-    return chiasmsWithUnits;
+    return (chiasms || []).map((chiasm) => ({
+      ...chiasm,
+      units: [...chiasm.units].sort(
+        (a: ChiasmUnit, b: ChiasmUnit) => a.unit_order - b.unit_order
+      ),
+    }));
   } catch (error) {
     console.error("Error fetching chiasms:", error);
     return [];
@@ -551,28 +538,17 @@ export async function fetchChiasmsForChapter(
   try {
     const allChiasms = await fetchChiasms();
 
-    // Filter chiasms that have units referencing this chapter
-    const relevantChiasms = allChiasms.filter((chiasm) => {
-      return chiasm.units.some((unit) => {
+    return allChiasms.filter((chiasm) =>
+      chiasm.units.some((unit) => {
         const refs = Array.isArray(unit.verse_references)
           ? unit.verse_references
           : [unit.verse_references];
 
-        return refs.some((ref: VerseReference) => {
-          // Check if reference includes this book and chapter
-          if (ref.bookId === bookId && ref.chapter === chapter) {
-            return true;
-          }
-          // Check cross-book ranges
-          if (ref.endBookId === bookId && ref.endChapter === chapter) {
-            return true;
-          }
-          return false;
-        });
-      });
-    });
-
-    return relevantChiasms;
+        return refs.some((ref: VerseReference) =>
+          referenceIncludesChapter(bookId, chapter, ref)
+        );
+      })
+    );
   } catch (error) {
     console.error("Error fetching chiasms for chapter:", error);
     return [];
@@ -596,6 +572,12 @@ export async function fetchChiasmsForBook(bookId: string): Promise<string[]> {
           }
           if (ref.endBookId === bookId && ref.endChapter) {
             chaptersWithChiasms.add(ref.endChapter);
+          }
+          // Middle chapters of a range within one book
+          if (ref.bookId === bookId && ref.endBookId === bookId && ref.endChapter) {
+            for (let c = ref.chapter + 1; c < ref.endChapter; c++) {
+              chaptersWithChiasms.add(c);
+            }
           }
         });
       });
