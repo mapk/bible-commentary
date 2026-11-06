@@ -31,7 +31,7 @@ npm run build    # production build; also lints and type checks
 npm run backup   # save commentary and chiasm tables to backups/ (gitignored)
 ```
 
-There is no test framework, CI, or formatter config. Before calling work done, run lint, `tsc`, and `npm run build`, then exercise the change in a browser (use the `run` skill), in both light and dark mode for UI changes. Tell the user what was and wasn't verified.
+There is no test framework or formatter config. GitHub Actions (`.github/workflows/ci.yml`) runs lint, build, and `tsc` on every PR and on `main`, using placeholder Supabase values, never real keys. CI doesn't exercise the app, so before calling work done, run lint, `tsc`, and `npm run build`, then exercise the change in a browser (use the `run` skill), in both light and dark mode for UI changes. Tell the user what was and wasn't verified.
 
 `npm run lint` currently reports one known warning, `react-hooks/exhaustive-deps` in `src/components/Chapter.tsx`. Don't add new ones.
 
