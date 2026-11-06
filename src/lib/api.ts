@@ -472,6 +472,10 @@ export async function createChiasm(
     } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
+    if (units.length === 0) {
+      throw new Error("A chiasm needs at least one unit");
+    }
+
     // Create chiasm
     const { data: chiasm, error: chiasmError } = await supabase
       .from("chiasms")
@@ -498,7 +502,20 @@ export async function createChiasm(
       .insert(unitsToInsert)
       .select();
 
-    if (unitsError) throw unitsError;
+    if (unitsError) {
+      // Don't leave a chiasm with no units behind. The original error is the
+      // one worth reporting, so a failed cleanup is only logged.
+      const { error: cleanupError } = await supabase
+        .from("chiasms")
+        .delete()
+        .eq("id", chiasm.id);
+
+      if (cleanupError) {
+        console.error("Error removing incomplete chiasm:", cleanupError);
+      }
+
+      throw unitsError;
+    }
 
     return {
       ...chiasm,

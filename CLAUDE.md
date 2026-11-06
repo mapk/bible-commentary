@@ -158,7 +158,7 @@ Don't copy these patterns. Fix them only when asked or when working in that area
 - **Dependency overrides:** `package.json` overrides the `postcss` bundled with `next` and the `minimatch` used by `@typescript-eslint/typescript-estree`, because neither has a patched release otherwise. Remove them once those packages ship fixes. `npm audit` should stay at 0.
 - **Chiasm lookups:** `fetchChiasmsForChapter` and `fetchChiasmsForBook` load every chiasm and filter in the client. Chapters between the start and end of a cross-book range aren't matched, because that needs book order.
 - **`updateChiasm` isn't atomic:** it adds new units before removing old ones, so a failure can leave duplicates until the next save, but can't lose units. Keep that order.
-- **`createChiasm` isn't atomic:** if inserting units fails, a chiasm with no units is left behind.
+- **`createChiasm` isn't atomic:** if inserting units fails, it deletes the new chiasm. If that cleanup also fails, a chiasm with no units is left behind and the error is logged.
 - **Docs drift:** `README.md` is mostly the create-next-app template.
 
 ## Git workflow
