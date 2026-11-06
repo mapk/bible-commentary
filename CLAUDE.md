@@ -112,6 +112,7 @@ CHIASM_SETUP.md             Chiasm feature notes
 ## Conventions
 
 - **Data access:** add API.Bible and Supabase calls to `src/lib/api.ts`, not inline in components. Some older components still query directly; don't copy that. Use `bibleApi` for API.Bible, and add any new endpoint to the allowlist in the proxy route.
+- **CDN caching:** Netlify's CDN ignores query strings on these responses. Never set a shared cache header on a response that depends on its query string.
 - **Types:** export shared types from `api.ts` or `verse-parser.ts`. Avoid `any`.
 - **Server vs client:** most UI is `"use client"` because auth and Supabase are browser-side. There is no server-side session, so server components can't see the current user.
 - **Imports:** use the `@/` alias for `src/`.
