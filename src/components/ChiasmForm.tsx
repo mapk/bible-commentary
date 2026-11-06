@@ -14,7 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { fetchBibleBooks, type ChiasmWithUnits } from "@/lib/api";
 import {
-  parseVerseReference,
+  formatVerseReferences,
+  parseMultipleVerseReferences,
   normalizeVerseReference,
   type VerseReference,
 } from "@/lib/verse-parser";
@@ -75,22 +76,7 @@ export function ChiasmForm({
           ? unit.verse_references
           : [unit.verse_references];
         
-        // Format the first reference as input string
-        const firstRef = refs[0];
-        let referenceInput = "";
-        if (firstRef) {
-          referenceInput = `${firstRef.book} ${firstRef.chapter}:${firstRef.verse}`;
-          if (firstRef.endVerse && !firstRef.endChapter && !firstRef.endBook) {
-            // Same chapter range
-            referenceInput += `-${firstRef.endVerse}`;
-          } else if (firstRef.endChapter && firstRef.endVerse && !firstRef.endBook) {
-            // Cross-chapter, same book
-            referenceInput += ` - ${firstRef.endChapter}:${firstRef.endVerse}`;
-          } else if (firstRef.endBook && firstRef.endChapter && firstRef.endVerse) {
-            // Cross-book range
-            referenceInput += ` - ${firstRef.endBook} ${firstRef.endChapter}:${firstRef.endVerse}`;
-          }
-        }
+        const referenceInput = formatVerseReferences(refs.filter(Boolean));
 
         return {
           id: unit.id,
@@ -135,41 +121,27 @@ export function ChiasmForm({
     id: string,
     referenceInput: string
   ) => {
-    const unit = units.find((u) => u.id === id);
-    if (!unit) return;
+    // Update the input right away so the cursor stays put while typing
+    setUnits((current) =>
+      current.map((u) => (u.id === id ? { ...u, referenceInput } : u))
+    );
 
-    // Parse the reference
-    const parsed = parseVerseReference(referenceInput, books);
-    if (!parsed) {
-      // Invalid reference, but keep the input
-      setUnits(
-        units.map((u) =>
-          u.id === id ? { ...u, referenceInput, verse_references: [] } : u
-        )
-      );
-      return;
-    }
+    // An invalid reference clears the unit but keeps the input
+    const parsed = parseMultipleVerseReferences(referenceInput, books);
+    const normalized = await Promise.all(
+      parsed.map((ref) => normalizeVerseReference(ref, books))
+    );
+    const verseReferences = normalized.filter(
+      (ref): ref is VerseReference => ref !== null
+    );
+    const isValid =
+      parsed.length > 0 && verseReferences.length === parsed.length;
 
-    // Normalize the reference
-    const normalized = await normalizeVerseReference(parsed, books);
-    if (!normalized) {
-      setUnits(
-        units.map((u) =>
-          u.id === id ? { ...u, referenceInput, verse_references: [] } : u
-        )
-      );
-      return;
-    }
-
-    // Update unit
-    setUnits(
-      units.map((u) =>
-        u.id === id
-          ? {
-              ...u,
-              referenceInput,
-              verse_references: [normalized],
-            }
+    // Skip this result if the input has changed since it started
+    setUnits((current) =>
+      current.map((u) =>
+        u.id === id && u.referenceInput === referenceInput
+          ? { ...u, verse_references: isValid ? verseReferences : [] }
           : u
       )
     );
@@ -359,7 +331,7 @@ export function ChiasmForm({
                         onChange={(e) =>
                           updateUnitReference(unit.id, e.target.value)
                         }
-                        placeholder="e.g., Genesis 1:1 or Genesis 1:1-3 or Genesis 50:24 - Exodus 1:3"
+                        placeholder="e.g., Genesis 1:1 or Genesis 1:1-3 or Genesis 1:1;1:3"
                         className={
                           unit.referenceInput &&
                           unit.verse_references.length === 0

@@ -159,7 +159,6 @@ Don't copy these patterns. Fix them only when asked or when working in that area
 - **Chiasm lookups:** `fetchChiasmsForChapter` and `fetchChiasmsForBook` load every chiasm and filter in the client. Chapters between the start and end of a cross-book range aren't matched, because that needs book order.
 - **`updateChiasm` isn't atomic:** it adds new units before removing old ones, so a failure can leave duplicates until the next save, but can't lose units. Keep that order.
 - **`createChiasm` isn't atomic:** if inserting units fails, it deletes the new chiasm. If that cleanup also fails, a chiasm with no units is left behind and the error is logged.
-- **Reference shorthand:** `parseMultipleVerseReferences` silently drops parts without a book name, so `Genesis 1:1;1:3` saves only 1:1.
 - **Unused code:** `fetchChapter` and `getBookId` in `api.ts` and `ui/scroll-area.tsx` have no callers.
 
 ## Git workflow
