@@ -11,7 +11,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { getChiasticLevel, getChiasticBackgroundColor } from "@/lib/chiasm-colors";
+import {
+  getChiasticLevel,
+  getChiasticBackgroundColor,
+  getChiasticAccentColor,
+} from "@/lib/chiasm-colors";
 import type { ChiasmWithUnits, ChiasmUnit } from "@/lib/api";
 import type { VerseReference } from "@/lib/verse-parser";
 import { useAuth } from "@/contexts/AuthContext";
@@ -116,7 +120,7 @@ export function ChiasmDetails({
             {chiasm.units.map((unit) => {
               const level = getChiasticLevel(unit.unit_order, chiasm.units.length);
               const bgColor = getChiasticBackgroundColor(level, maxLevel);
-              const borderColor = getChiasticBackgroundColor(level, maxLevel, 70, 60);
+              const borderColor = getChiasticAccentColor(level, maxLevel);
               const chiasticLabel = getChiasticLabel(unit.unit_order, chiasm.units.length);
               const primaryVerseRef = getPrimaryVerseReference(unit);
               const indentLevel = getIndentationLevel(unit.unit_order, chiasm.units.length);
@@ -138,12 +142,15 @@ export function ChiasmDetails({
                   <CardHeader className="pb-2 px-4 pt-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                       <span
-                        className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                        style={{ backgroundColor: borderColor }}
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
+                        style={{
+                          backgroundColor: borderColor,
+                          color: "hsl(var(--chiasm-on-accent))",
+                        }}
                       >
                         {chiasticLabel}
                       </span>
-                      <span className="font-mono text-slate-900">
+                      <span className="font-mono text-foreground">
                         {primaryVerseRef}
                       </span>
                     </CardTitle>
@@ -154,7 +161,7 @@ export function ChiasmDetails({
                         {refs.slice(1).map((ref: VerseReference, refIndex: number) => (
                           <div
                             key={refIndex}
-                            className="text-xs font-mono text-slate-600"
+                            className="text-xs font-mono text-foreground/80"
                           >
                             {formatVerseReference(ref)}
                           </div>
@@ -162,7 +169,7 @@ export function ChiasmDetails({
                       </div>
                     )}
                     {unit.description && (
-                      <p className="text-xs text-slate-600 italic">
+                      <p className="text-xs text-foreground/80 italic">
                         {unit.description}
                       </p>
                     )}

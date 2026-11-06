@@ -77,10 +77,10 @@ export function ChapterList({ bookId, name }: ChapterListProps) {
               <span>Chapter {chapter.number}</span>
               <div className="absolute right-3 flex items-center gap-1">
                 {showChiasms && chapter.hasChiasm && (
-                  <AlignRight className="h-4 w-4 text-purple-500" />
+                  <AlignRight className="h-4 w-4 text-purple-500 dark:text-purple-400" />
                 )}
                 {chapter.commentaryCount > 0 && (
-                  <span className="text-xs text-white bg-slate-300 rounded-full px-2 py-0.5">
+                  <span className="text-xs text-foreground bg-foreground/10 rounded-full px-2 py-0.5">
                     {chapter.commentaryCount}
                   </span>
                 )}
