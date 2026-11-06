@@ -1,174 +1,55 @@
-# Chiasm Feature Setup Guide
+# Chiasms
 
-This guide will help you set up the chiastic structure feature in your Bible commentary app.
+A chiasm is a mirrored literary structure. In this app it's a named list of units, each pointing at one or more verses, and shown as colored highlights in the reader.
 
-## Database Setup
+## Database setup
 
-### 1. Run the Migration
+The tables are already live, so this only applies to a new database. Run these in the Supabase SQL editor, in order. The Supabase CLI won't pick them up, because their filenames have no timestamp.
 
-Execute the SQL migration file to create the necessary tables:
+1. `supabase/migrations/create_chiasms.sql`
+2. `supabase/migrations/add_unit_description.sql`
 
-```bash
-# If using Supabase CLI
-supabase migration up
+This creates `chiasms` and `chiasm_units`, with row level security. Anyone can read chiasms. Only the creator can edit or delete one, and that includes admins.
 
-# Or manually run the SQL in your Supabase dashboard
-# File: supabase/migrations/create_chiasms.sql
-```
+## Creating a chiasm
 
-The migration creates:
-- `chiasms` table - Stores chiasm metadata
-- `chiasm_units` table - Stores individual units of each chiasm
-- Row Level Security (RLS) policies for data access
-- Indexes for performance
+1. Log in, click your name in the header, and choose **Create a Chiasm**.
+2. Enter a name and, optionally, a description.
+3. Click **Add Unit** for each unit and enter its verse references.
+4. Drag units into order. The order sets the structure and the colors.
+5. Click **Save Chiasm**.
 
-### 2. Verify Tables
+To edit or delete a chiasm you created, click a highlighted verse and use the buttons in the side panel.
 
-After running the migration, verify the tables exist in your Supabase dashboard:
-- Go to Table Editor
-- You should see `chiasms` and `chiasm_units` tables
+## Verse reference formats
 
-## Features Implemented
+| Format | Example |
+| --- | --- |
+| Single verse | `Genesis 1:1` |
+| Verse range | `Genesis 1:1-3` |
+| Across chapters | `Genesis 1:1 - Genesis 2:3` |
+| Across books | `Genesis 50:24 - Exodus 1:3` |
+| Separate verses | `Genesis 1:1; Genesis 1:3` |
 
-### Part 1: UI System for Creating Chiasms
+Book names aren't case-sensitive.
 
-✅ **Global Header Update**
-- User's first name displayed as a clickable button
-- Popover menu with "Create a Chiasm" option
+These don't work:
 
-✅ **Chiasm Creation UI**
-- Modal form with:
-  - Name field (required)
-  - Description field (optional)
-  - Dynamic unit list with drag-and-drop reordering
-  - Verse reference input for each unit
-  - Support for various reference formats:
-    - Single verse: `Genesis 1:1`
-    - Verse range: `Genesis 1:1-3`
-    - Cross-book range: `Genesis 50:24 - Exodus 1:3`
-    - Multiple discrete verses: `Genesis 1:1;1:3;1:7`
+- `Genesis 1:1;1:3;1:7` keeps only the first verse and drops the rest without warning. Repeat the book name for each verse.
+- `Genesis 1:5-4:2` and `Genesis 1:1,3` are rejected.
+- A range across books doesn't highlight chapters between its start and end, such as Exodus 1 in `Genesis 50:24 - Exodus 2:3`.
 
-✅ **Save Behavior**
-- Validates all verse references
-- Converts references to structured format
-- Saves to Supabase
-- Shows success/error notifications
+## Viewing chiasms
 
-### Part 2: Presenting Chiasms
+1. Open the settings popover in the header and turn on **Show Chiasms**. The setting lasts for the browser session.
+2. In a book's chapter list, an icon marks chapters that have chiasms.
+3. In a chapter, chiasm verses are highlighted. A badge shows the count when several chiasms overlap on a verse.
+4. Click a highlighted verse to see the full structure in a side panel.
 
-✅ **Toggle Button**
-- "Show Chiasms" / "Hide Chiasms" toggle in header
-- State persists per user session (sessionStorage)
-
-✅ **Chapter List View**
-- Shows sparkle icon (✨) next to chapters with chiasms
-- Only visible when "Show Chiasms" is enabled
-
-✅ **Chapter Reading View**
-- Verses with chiasms highlighted with rainbow colors
-- Colors follow symmetric pattern from center outward
-- Multiple overlapping chiasms supported (shows count badge)
-
-✅ **Side Panel for Chiasm Details**
-- Opens when clicking a chiasm-highlighted verse
-- Displays:
-  - Chiasm name and description
-  - Full chiastic structure with all units
-  - Color-coded units with level indicators
-  - Verse references for each unit
-
-### Part 3: Supabase Schema
-
-✅ **Tables Created**
-- `chiasms`: Main chiasm records
-- `chiasm_units`: Individual units with verse references
-
-✅ **Security**
-- Row Level Security (RLS) enabled
-- Users can only create/edit/delete their own chiasms
-- All users can read all chiasms (public viewing)
-
-### Part 4: Implementation Details
-
-✅ **Components Created**
-- `ChiasmForm.tsx` - Modal for creating/editing chiasms
-- `ChiasmDetails.tsx` - Side panel for viewing chiasm details
-- `HeaderWrapper.tsx` - Wrapper managing chiasm state
-- Updated `Header.tsx` - Added user profile popover and toggle
-- Updated `Chapter.tsx` - Added chiasm highlighting
-- Updated `ChapterList.tsx` - Added chiasm markers
-
-✅ **Utilities Created**
-- `verse-parser.ts` - Parses various verse reference formats
-- `chiasm-colors.ts` - Generates rainbow colors for chiastic levels
-
-✅ **API Functions**
-- `createChiasm()` - Create new chiasm
-- `fetchChiasms()` - Fetch all chiasms
-- `fetchChiasmsForChapter()` - Fetch chiasms for specific chapter
-- `fetchChiasmsForBook()` - Get chapters with chiasms for a book
-- `updateChiasm()` - Update existing chiasm
-- `deleteChiasm()` - Delete chiasm
-
-## Usage
-
-### Creating a Chiasm
-
-1. Log in to your account
-2. Click your name in the header (top right)
-3. Click "Create a Chiasm"
-4. Fill in the form:
-   - Enter a name for the chiasm
-   - (Optional) Add a description
-   - Click "Add Unit" to add chiastic units
-   - Enter verse references for each unit (e.g., "Genesis 1:1" or "Genesis 1:1-3")
-   - Drag units to reorder them (important for chiastic structure)
-5. Click "Save Chiasm"
-
-### Viewing Chiasms
-
-1. Toggle "Show Chiasms" in the header
-2. Navigate to any book/chapter
-3. Chapters with chiasms will show a sparkle icon (✨)
-4. Verses that are part of chiasms will be highlighted with colors
-5. Click a highlighted verse to see chiasm details
-
-## Color Algorithm
-
-The rainbow color algorithm generates colors based on distance from the center:
-- **Center** (level 0): Red
-- **Outward** (increasing levels): Orange → Yellow → Green → Blue → Indigo → Violet
-
-Colors are automatically calculated based on the total number of units in the chiasm.
-
-## Verse Reference Formats Supported
-
-- Single verse: `Genesis 1:1`
-- Verse range: `Genesis 1:1-3`
-- Cross-chapter: `Genesis 1:1 - Genesis 2:3`
-- Cross-book: `Genesis 50:24 - Exodus 1:3`
-- Multiple discrete: `Genesis 1:1;1:3;1:7` (partial support)
-
-## Notes
-
-- Chiasms are public (all users can view them)
-- Only the creator can edit/delete their chiasms
-- The "Show Chiasms" toggle state persists during the browser session
-- Multiple chiasms can overlap on the same verse (shows count badge)
+Colors come from each unit's distance from the center of the chiasm, starting at red in the center and moving through the rainbow to violet at the edges.
 
 ## Troubleshooting
 
-### Chiasms not showing
-- Make sure "Show Chiasms" toggle is enabled
-- Verify the migration ran successfully
-- Check browser console for errors
-
-### Verse references not parsing
-- Ensure format matches supported patterns
-- Book names should match Bible book names (case-insensitive)
-- Check that the book exists in your Bible data
-
-### Colors not appearing
-- Verify chiasm has units with valid verse references
-- Check that verses match the current chapter being viewed
-
+- **No highlights:** check that **Show Chiasms** is on, and that the references match the current chapter.
+- **Reference rejected:** use a format from the table above.
+- **Verses missing from a saved unit:** check for the `Genesis 1:1;1:3` shorthand described above.

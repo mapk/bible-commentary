@@ -2,42 +2,40 @@
 
 <img width="1549" alt="commentary" src="https://github.com/user-attachments/assets/8b0f4d8f-bf28-442e-a330-b7f8150a1476" />
 
-The web app syncs my own commentary with specific verses throughout the Bible. In later versions it will include commentary from community eldership.
+The web app syncs commentary from trusted community elders with specific verses throughout the Bible.
 
+Readers browse the King James Bible by book, chapter, and verse, and can request commentary on a verse. Contributors write commentary and define chiasms, which appear as colored verse highlights.
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Stack
 
-## Getting Started
+- Next.js App Router, React, TypeScript, and Tailwind CSS with shadcn/ui
+- Supabase for the database and login
+- [API.Bible](https://scripture.api.bible) for KJV text
+- Netlify for hosting
 
-First, run the development server:
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # then fill in the values
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`.env.example` lists the required settings. They're also needed in Netlify. Never commit real values, since this repo is public.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev      # local server
+npm run lint     # lint
+npx tsc --noEmit # type check
+npm run build    # production build
+npm run backup   # save a local database backup to backups/
+```
 
-## Learn More
+GitHub Actions runs lint, build, and the type check on every pull request.
 
-To learn more about Next.js, take a look at the following resources:
+## More
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [CLAUDE.md](CLAUDE.md): architecture, data model, conventions, security rules, and known issues
+- [CHIASM_SETUP.md](CHIASM_SETUP.md): how chiasms work and how to enter them

@@ -74,10 +74,10 @@ src/lib/
   verse-parser.ts           Parses references such as "Genesis 1:1-3" into VerseReference
   chiasm-colors.ts          Rainbow colors by distance from the chiasm's center
 supabase/migrations/        SQL for the chiasm tables only
-CHIASM_SETUP.md             Chiasm feature notes
+scripts/                    Local backup and its schedule
+.github/workflows/ci.yml    Lint, build, and type check on PRs
+CHIASM_SETUP.md             How chiasms work and how to enter them
 ```
-
-`src/components/ChapterContent.tsx`, `ChapterHandler.tsx`, and `SearchResults.tsx` appear to be unused. Confirm before editing them, and don't build on them.
 
 ## Data model
 
@@ -106,7 +106,7 @@ CHIASM_SETUP.md             Chiasm feature notes
 ### Migrations
 
 - The live schema is the source of truth for base tables not in the repo. Inspect it instead of guessing.
-- Older migration filenames have no timestamp prefix, and the Supabase CLI only picks up `<timestamp>_name.sql`. Those were meant to be applied manually in the SQL editor, despite what `CHIASM_SETUP.md` suggests.
+- Older migration filenames have no timestamp prefix, and the Supabase CLI only picks up `<timestamp>_name.sql`. Those were meant to be applied manually in the SQL editor.
 - Name new migrations `YYYYMMDDHHMMSS_description.sql`, make them idempotent where possible, and enable RLS with explicit policies on every new table.
 - Never run schema changes or destructive SQL against the live database without explicit approval. There is no separate staging environment documented.
 
@@ -159,7 +159,8 @@ Don't copy these patterns. Fix them only when asked or when working in that area
 - **Chiasm lookups:** `fetchChiasmsForChapter` and `fetchChiasmsForBook` load every chiasm and filter in the client. Chapters between the start and end of a cross-book range aren't matched, because that needs book order.
 - **`updateChiasm` isn't atomic:** it adds new units before removing old ones, so a failure can leave duplicates until the next save, but can't lose units. Keep that order.
 - **`createChiasm` isn't atomic:** if inserting units fails, it deletes the new chiasm. If that cleanup also fails, a chiasm with no units is left behind and the error is logged.
-- **Docs drift:** `README.md` is mostly the create-next-app template.
+- **Reference shorthand:** `parseMultipleVerseReferences` silently drops parts without a book name, so `Genesis 1:1;1:3` saves only 1:1.
+- **Unused code:** `fetchChapter` and `getBookId` in `api.ts` and `ui/scroll-area.tsx` have no callers.
 
 ## Git workflow
 
