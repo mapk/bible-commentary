@@ -3,21 +3,13 @@
 import { useEffect, useState } from "react";
 import {
   fetchCommentaryRequests,
+  bibleApi,
   fetchBibleBooks,
   stripParagraphMarkers,
 } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import axios from "axios";
-
-const API_KEY = "d5b6cacdee5ceb38161e26a0777dc4d1";
-const BIBLE_ID = "de4e12af7f28f599-02";
-
-const api = axios.create({
-  baseURL: "https://api.scripture.api.bible/v1",
-  headers: { "api-key": API_KEY },
-});
 
 interface CommentaryRequest {
   id: number;
@@ -69,9 +61,8 @@ export default function RequestsPage() {
                 };
               }
 
-              // Fetch verse using axios instance
-              const response = await api.get(
-                `/bibles/${BIBLE_ID}/verses/${request.book}.${request.chapter}.${request.verse}`,
+              const response = await bibleApi.get(
+                `/verses/${request.book}.${request.chapter}.${request.verse}`,
                 {
                   params: {
                     "content-type": "text",

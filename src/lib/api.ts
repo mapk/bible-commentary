@@ -1,15 +1,18 @@
 import axios from "axios";
 import { supabase } from "./supabase";
+import { BIBLE_API_URL, BIBLE_ID } from "./bible-config";
 import type { VerseReference } from "./verse-parser";
 
-const API_KEY = "d5b6cacdee5ceb38161e26a0777dc4d1";
-const API_URL = "https://api.scripture.api.bible/v1";
-const BIBLE_ID = "de4e12af7f28f599-02"; // KJV Bible ID
-
-const api = axios.create({
-  baseURL: API_URL,
-  headers: { "api-key": API_KEY },
-});
+// On the server, call API.Bible directly. In the browser, go through
+// /api/bible so the key never reaches the client.
+export const bibleApi = axios.create(
+  typeof window === "undefined"
+    ? {
+        baseURL: `${BIBLE_API_URL}/bibles/${BIBLE_ID}`,
+        headers: { "api-key": process.env.BIBLE_API_KEY },
+      }
+    : { baseURL: "/api/bible" }
+);
 
 // The KJV source text from api.bible marks paragraph breaks with a literal
 // pilcrow (¶) inline with the verse text — strip it, it's not meant to render.
@@ -50,7 +53,7 @@ export interface UserProfile {
 
 export async function fetchBibleBooks() {
   try {
-    const response = await api.get("/bibles/de4e12af7f28f599-02/books");
+    const response = await bibleApi.get("/books");
     return response.data.data;
   } catch (error) {
     console.error("Error fetching Bible books:", error);
@@ -60,9 +63,7 @@ export async function fetchBibleBooks() {
 
 export async function fetchChapters(bookId: string): Promise<number[]> {
   try {
-    const response = await api.get(
-      `/bibles/de4e12af7f28f599-02/books/${bookId}/chapters`
-    );
+    const response = await bibleApi.get(`/books/${bookId}/chapters`);
 
     // Skip the first item if it's an intro chapter
     const chaptersData =
@@ -85,9 +86,7 @@ export async function fetchChapterContent(
   chapterNumber: number
 ) {
   try {
-    const response = await api.get(
-      `/bibles/de4e12af7f28f599-02/chapters/${bookId}.${chapterNumber}`
-    );
+    const response = await bibleApi.get(`/chapters/${bookId}.${chapterNumber}`);
     return response.data.data.content;
   } catch (error) {
     console.error("Error fetching chapter content:", error);
@@ -250,22 +249,11 @@ export async function fetchSearchResults(
     let hasMore = true;
 
     while (hasMore) {
-      const response = await fetch(
-        `https://api.scripture.api.bible/v1/bibles/${BIBLE_ID}/search?query=${encodeURIComponent(
-          query
-        )}&limit=${limit}&offset=${offset}&sort=canonical&fuzziness=1`,
-        {
-          headers: {
-            "api-key": API_KEY,
-          },
-        }
-      );
+      const response = await bibleApi.get("/search", {
+        params: { query, limit, offset, sort: "canonical", fuzziness: 1 },
+      });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch search results");
-      }
-
-      const data = await response.json();
+      const data = response.data;
       const books = await fetchBibleBooks();
 
       // Transform the API response into our SearchResult format
@@ -334,7 +322,7 @@ export async function requestCommentary(
   verse: number
 ) {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("commentary_requests")
       .insert([
         {
@@ -343,11 +331,9 @@ export async function requestCommentary(
           verse,
           status: "pending",
         },
-      ])
-      .select();
+      ]);
 
     if (error) throw error;
-    return data;
   } catch (error) {
     console.error("Error requesting commentary:", error);
     throw error;
@@ -413,23 +399,18 @@ export async function deleteCommentary(commentaryId: number) {
   }
 }
 
-export async function updateUserProfile(userId: string, userName: string) {
-  try {
-    const { data, error } = await supabase
-      .from("profiles")
-      .upsert({
-        id: userId,
-        username: userName,
-        updated_at: new Date().toISOString(),
-      })
-      .select();
+export async function isUserAdmin(userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("admins")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
 
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error updating user profile:", error);
-    throw error;
+  if (error) {
+    console.error("Error checking admin status:", error);
+    return false;
   }
+  return data !== null;
 }
 
 export async function getUserProfile(

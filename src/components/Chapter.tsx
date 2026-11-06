@@ -16,8 +16,6 @@ import {
   fetchCommentaryRequests,
   updateCommentary,
   deleteCommentary,
-  getUserProfile,
-  type UserProfile,
   fetchChiasmsForChapter,
   updateChiasm,
   deleteChiasm,
@@ -168,6 +166,7 @@ interface Commentary {
   verse_range: string;
   commentary_author: string;
   commentary_text: string;
+  user_id: string | null;
   created_at: string;
 }
 
@@ -202,7 +201,7 @@ export default function Chapter({
   prevLink?: string | null;
   nextLink?: string | null;
 }) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { showChiasms } = useChiasm();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -229,7 +228,6 @@ export default function Chapter({
   const [editingCommentary, setEditingCommentary] = useState<Commentary | null>(
     null
   );
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [verseChiasmMap, setVerseChiasmMap] = useState<
     Map<number, VerseChiasmInfo[]>
   >(new Map());
@@ -299,21 +297,6 @@ export default function Chapter({
 
     loadRequests();
   }, [bookId, currentChapter]);
-
-  // Load user profile
-  useEffect(() => {
-    const loadUserProfile = async () => {
-      if (user?.id) {
-        try {
-          const profile = await getUserProfile(user.id);
-          setUserProfile(profile);
-        } catch (error) {
-          console.error("Error loading user profile:", error);
-        }
-      }
-    };
-    loadUserProfile();
-  }, [user]);
 
   // Deep-link to a specific verse via ?verse= (from search/requests pages)
   useEffect(() => {
@@ -756,7 +739,7 @@ export default function Chapter({
                       </span>
                     )}
                 </CardTitle>
-                {userProfile?.username === comment.commentary_author && (
+                {(isAdmin || (user && comment.user_id === user.id)) && (
                   <Button
                     variant="link"
                     size="sm"
