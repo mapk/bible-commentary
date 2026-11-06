@@ -1,5 +1,3 @@
-"use server";
-
 import { fetchBibleBooks, fetchChapterContent, fetchChapters } from "@/lib/api";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -37,9 +35,9 @@ function ChapterContent({
 export default async function ChapterPage({
   params,
 }: {
-  params: { bookId: string; chapterNumber: string };
+  params: Promise<{ bookId: string; chapterNumber: string }>;
 }) {
-  const { bookId, chapterNumber } = params;
+  const { bookId, chapterNumber } = await params;
   const books: Book[] = await fetchBibleBooks();
   const currentBookIndex = books.findIndex((b: Book) => b.id === bookId);
   const book = books[currentBookIndex];

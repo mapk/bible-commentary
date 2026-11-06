@@ -27,9 +27,9 @@ const ALLOWED_PARAMS = new Set([
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  const path = params.path.join("/");
+  const path = (await params).path.join("/");
 
   if (!ALLOWED_PATHS.some((pattern) => pattern.test(path))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
