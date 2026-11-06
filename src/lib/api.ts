@@ -620,24 +620,22 @@ export async function updateChiasm(
   }[]
 ): Promise<ChiasmWithUnits | null> {
   try {
-    // Update chiasm
-    const { data: chiasm, error: chiasmError } = await supabase
-      .from("chiasms")
-      .update({
-        name,
-        description,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", chiasmId)
-      .select()
-      .single();
+    if (units.length === 0) {
+      throw new Error("A chiasm must have at least one unit");
+    }
 
-    if (chiasmError) throw chiasmError;
+    const { data: oldUnits, error: oldUnitsError } = await supabase
+      .from("chiasm_units")
+      .select("id")
+      .eq("chiasm_id", chiasmId);
 
-    // Delete existing units
-    await supabase.from("chiasm_units").delete().eq("chiasm_id", chiasmId);
+    if (oldUnitsError) throw oldUnitsError;
 
-    // Insert new units
+    const oldUnitIds = (oldUnits || []).map((unit) => unit.id);
+
+    // These steps aren't one transaction, so old units are removed last. A
+    // failure can leave duplicates, which saving again clears, but never loses
+    // units.
     const unitsToInsert = units.map((unit) => ({
       chiasm_id: chiasmId,
       unit_order: unit.unit_order,
@@ -652,9 +650,52 @@ export async function updateChiasm(
 
     if (unitsError) throw unitsError;
 
+    const { data: chiasm, error: chiasmError } = await supabase
+      .from("chiasms")
+      .update({
+        name,
+        description,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", chiasmId)
+      .select()
+      .single();
+
+    if (chiasmError) {
+      // The old units are untouched at this point, so undo the insert.
+      const { error: cleanupError } = await supabase
+        .from("chiasm_units")
+        .delete()
+        .in(
+          "id",
+          (createdUnits || []).map((unit) => unit.id)
+        );
+
+      if (cleanupError) {
+        console.error("Error removing new chiasm units:", cleanupError);
+      }
+
+      throw chiasmError;
+    }
+
+    if (oldUnitIds.length > 0) {
+      const { data: deletedUnits, error: deleteError } = await supabase
+        .from("chiasm_units")
+        .delete()
+        .in("id", oldUnitIds)
+        .select("id");
+
+      if (deleteError) throw deleteError;
+
+      // RLS reports a blocked delete as zero rows rather than an error.
+      if (!deletedUnits || deletedUnits.length === 0) {
+        throw new Error("Could not remove the previous chiasm units");
+      }
+    }
+
     return {
       ...chiasm,
-      units: createdUnits || [],
+      units: (createdUnits || []).sort((a, b) => a.unit_order - b.unit_order),
     };
   } catch (error) {
     console.error("Error updating chiasm:", error);
