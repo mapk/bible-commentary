@@ -145,8 +145,7 @@ Don't copy these patterns. Fix them only when asked or when working in that area
 
 - **Old API.Bible key in git history:** treat any key found in history as compromised. It must never be reused.
 - **Public `/api/bible` proxy:** it's limited to KJV reads and CDN-cached, but has no rate limit. Commentary requests also accept anonymous inserts without one, so spam is possible.
-- **Dev-only audit findings:** `npm audit` reports lint tooling issues through `eslint-config-next`. `npm audit --omit=dev` should stay at 0.
-- **`postcss` override:** `package.json` overrides the copy bundled with `next`. Remove the override once `next` ships a patched version.
+- **Dependency overrides:** `package.json` overrides the `postcss` bundled with `next` and the `minimatch` used by `@typescript-eslint/typescript-estree`, because neither has a patched release otherwise. Remove them once those packages ship fixes. `npm audit` should stay at 0.
 - **Chiasm lookups:** `fetchChiasmsForChapter` and `fetchChiasmsForBook` load every chiasm and filter in the client, with one query per chiasm for units. Middle chapters of a multi-chapter range are missed, since only start and end chapters are matched.
 - **`updateChiasm` isn't atomic:** it deletes then re-inserts units, and doesn't check the delete's error. A failed insert can lose units.
 - **Docs drift:** `README.md` is mostly the create-next-app template.

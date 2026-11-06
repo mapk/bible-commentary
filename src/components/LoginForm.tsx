@@ -33,7 +33,7 @@ export default function LoginForm() {
       // Redirect to home page after successful login
       router.push("/");
       router.refresh();
-    } catch (err) {
+    } catch {
       setError("An error occurred during login");
     } finally {
       setLoading(false);

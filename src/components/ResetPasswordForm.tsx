@@ -29,7 +29,7 @@ export default function ResetPasswordForm() {
       }
 
       setSuccess(true);
-    } catch (err) {
+    } catch {
       setError("An error occurred while requesting password reset");
     } finally {
       setLoading(false);

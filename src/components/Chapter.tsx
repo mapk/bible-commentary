@@ -586,7 +586,7 @@ export default function Chapter({
         title: "Commentary Requested",
         description: "Your request has been submitted successfully.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to submit commentary request. Please try again.",
@@ -621,7 +621,7 @@ export default function Chapter({
         title: "Commentary Updated",
         description: "Your changes have been saved successfully.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to update commentary. Please try again.",
