@@ -95,26 +95,6 @@ export function parseVerseReference(
     }
   }
 
-  // Try multiple discrete verses (e.g., "Genesis 1:1;1:3;1:7")
-  const multipleMatch = trimmed.match(/^([\w\s]+?)\s+((?:\d+:\d+;?)+)$/i);
-  if (multipleMatch) {
-    // For now, we'll parse the first verse and note it's a multiple verse reference
-    // The full parsing of multiple verses would require more complex logic
-    const book = findBookByName(multipleMatch[1], bookList);
-    const firstVerse = multipleMatch[2].split(";")[0];
-    const [chapter, verse] = firstVerse.split(":");
-
-    if (book && chapter && verse) {
-      return {
-        book: book.name,
-        chapter: parseInt(chapter),
-        verse: parseInt(verse),
-        // Note: For multiple discrete verses, we'd need to store them differently
-        // This is a simplified version
-      };
-    }
-  }
-
   return null;
 }
 
@@ -151,7 +131,9 @@ function findBookByName(
 }
 
 /**
- * Parse multiple verse references (semicolon-separated)
+ * Parse semicolon-separated references. A part without a book name, such as the
+ * second part of "Genesis 1:1;1:3", uses the book from the part before it.
+ * Returns an empty list if any part is invalid, so verses are never dropped.
  */
 export function parseMultipleVerseReferences(
   references: string,
@@ -159,18 +141,40 @@ export function parseMultipleVerseReferences(
 ): ParsedVerseReference[] {
   if (!references || !references.trim()) return [];
 
-  // Split by semicolon and parse each
   const parts = references.split(";").map((p) => p.trim()).filter(Boolean);
   const parsed: ParsedVerseReference[] = [];
+  let currentBook: string | null = null;
 
   for (const part of parts) {
-    const parsedRef = parseVerseReference(part, bookList);
-    if (parsedRef) {
-      parsed.push(parsedRef);
-    }
+    const hasNoBook = /^\d+:\d/.test(part);
+    const parsedRef: ParsedVerseReference | null =
+      hasNoBook && currentBook
+        ? parseVerseReference(`${currentBook} ${part}`, bookList)
+        : parseVerseReference(part, bookList);
+
+    if (!parsedRef) return [];
+
+    parsed.push(parsedRef);
+    currentBook = parsedRef.endBook || parsedRef.book;
   }
 
   return parsed;
+}
+
+/**
+ * Format references as text that parseMultipleVerseReferences can read back
+ */
+export function formatVerseReferences(references: VerseReference[]): string {
+  return references
+    .map((ref) => {
+      const start = `${ref.book} ${ref.chapter}:${ref.verse}`;
+
+      if (ref.endChapter && ref.endVerse) {
+        return `${start} - ${ref.endBook || ref.book} ${ref.endChapter}:${ref.endVerse}`;
+      }
+      return ref.endVerse ? `${start}-${ref.endVerse}` : start;
+    })
+    .join("; ");
 }
 
 /**
