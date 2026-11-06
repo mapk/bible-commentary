@@ -13,6 +13,53 @@ interface BookListProps {
   books: Book[];
 }
 
+const CARD_STAGGER_MS = 100;
+const BOOKS_START_AFTER_CARD_MS = 250;
+const BOOK_STAGGER_MS = 20;
+
+function TestamentCard({
+  title,
+  books,
+  row,
+}: {
+  title: string;
+  books: Book[];
+  row: number;
+}) {
+  const cardDelay = row * CARD_STAGGER_MS;
+
+  return (
+    <Card
+      className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:fill-mode-both motion-safe:duration-500"
+      style={{ animationDelay: `${cardDelay}ms` }}
+    >
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-2">
+          {books.map((book, index) => (
+            <Link
+              key={book.id}
+              href={`/book/${encodeURIComponent(book.id)}`}
+              className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:fill-mode-both motion-safe:duration-300"
+              style={{
+                animationDelay: `${
+                  cardDelay + BOOKS_START_AFTER_CARD_MS + index * BOOK_STAGGER_MS
+                }ms`,
+              }}
+            >
+              <Button variant="secondary" className="w-full justify-start">
+                {book.name}
+              </Button>
+            </Link>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function BookList({ books }: BookListProps) {
   const torahBooks = books.slice(0, 5);
   const prophetBooks = books.filter((book, index) =>
@@ -29,43 +76,18 @@ export function BookList({ books }: BookListProps) {
   const epistlesBooks = books.slice(44, 65);
   const apocalypseBook = books.slice(65, 66);
 
-  const TestamentCard = ({
-    title,
-    books,
-  }: {
-    title: string;
-    books: Book[];
-  }) => (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-2">
-          {books.map((book) => (
-            <Link key={book.id} href={`/book/${encodeURIComponent(book.id)}`}>
-              <Button variant="secondary" className="w-full justify-start">
-                {book.name}
-              </Button>
-            </Link>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <div className="flex flex-col gap-8 md:flex-row">
       <div className="flex-1 space-y-8">
-        <TestamentCard title="Torah" books={torahBooks} />
-        <TestamentCard title="Prophets" books={prophetBooks} />
-        <TestamentCard title="Writings" books={writingsBooks} />
+        <TestamentCard title="Torah" books={torahBooks} row={0} />
+        <TestamentCard title="Prophets" books={prophetBooks} row={1} />
+        <TestamentCard title="Writings" books={writingsBooks} row={2} />
       </div>
       <div className="flex-1 space-y-8">
-        <TestamentCard title="Gospels" books={gospelBooks} />
-        <TestamentCard title="Acts of the Apostles" books={actsBook} />
-        <TestamentCard title="Epistles" books={epistlesBooks} />
-        <TestamentCard title="Apocalypse" books={apocalypseBook} />
+        <TestamentCard title="Gospels" books={gospelBooks} row={0} />
+        <TestamentCard title="Acts of the Apostles" books={actsBook} row={1} />
+        <TestamentCard title="Epistles" books={epistlesBooks} row={2} />
+        <TestamentCard title="Apocalypse" books={apocalypseBook} row={3} />
       </div>
     </div>
   );
