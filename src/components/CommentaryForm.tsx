@@ -46,9 +46,8 @@ export function CommentaryForm({
   commentaryAuthor = "",
   verseRange,
 }: CommentaryFormProps) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
-  const isSuperAdmin = user?.email === "uraine@gmail.com";
   const [books, setBooks] = useState<{ id: string; name: string }[]>([]);
   const [chapters, setChapters] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
@@ -221,10 +220,10 @@ export function CommentaryForm({
                   id="author"
                   placeholder={loadingProfile ? "Loading..." : "Your Name"}
                   value={formData.commentary_author}
-                  disabled={!isSuperAdmin}
+                  disabled={!isAdmin}
                   className="bg-background"
                   onChange={
-                    isSuperAdmin
+                    isAdmin
                       ? (e) =>
                           setFormData({
                             ...formData,
