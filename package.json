@@ -35,6 +35,8 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@typescript-eslint/eslint-plugin": "8.72.1",
+    "@typescript-eslint/parser": "8.72.1",
     "eslint": "^8",
     "eslint-config-next": "15.5.29",
     "postcss": "^8",
@@ -44,6 +46,9 @@
   "overrides": {
     "next": {
       "postcss": "8.5.32"
+    },
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "11.0.5"
     }
   }
 }

@@ -50,7 +50,7 @@ export default function UpdatePasswordForm() {
       // Redirect to home page after successful password update
       router.push("/");
       router.refresh();
-    } catch (err) {
+    } catch {
       setError("An error occurred while updating the password");
     } finally {
       setLoading(false);
