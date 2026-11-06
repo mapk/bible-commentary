@@ -6,8 +6,8 @@ export default function About() {
           <h1 className="text-2xl font-semibold mb-8">About This Site</h1>
           <p className="mb-4">
             This Tолкование site is designed to be simple and intuitive to use.
-            Verses with commentary are in black text, verses without are in a
-            lighter gray text. How to get started:
+            Verses with commentary are marked with a small speech bubble icon.
+            How to get started:
           </p>
           <ol className="list-decimal pl-8 space-y-2 mb-4">
             <li>Browse books of the Bible from the homepage</li>
