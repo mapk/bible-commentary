@@ -28,6 +28,7 @@ npm run dev      # http://localhost:3000
 npm run lint     # next lint
 npx tsc --noEmit # type check
 npm run build    # production build; also lints and type checks
+npm run backup   # save commentary and chiasm tables to backups/ (gitignored)
 ```
 
 There is no test framework, CI, or formatter config. Before calling work done, run lint, `tsc`, and `npm run build`, then exercise the change in a browser (use the `run` skill), in both light and dark mode for UI changes. Tell the user what was and wasn't verified.
@@ -108,6 +109,15 @@ CHIASM_SETUP.md             Chiasm feature notes
 - Older migration filenames have no timestamp prefix, and the Supabase CLI only picks up `<timestamp>_name.sql`. Those were meant to be applied manually in the SQL editor, despite what `CHIASM_SETUP.md` suggests.
 - Name new migrations `YYYYMMDDHHMMSS_description.sql`, make them idempotent where possible, and enable RLS with explicit policies on every new table.
 - Never run schema changes or destructive SQL against the live database without explicit approval. There is no separate staging environment documented.
+
+## Backups
+
+The Supabase Free plan has no automatic backups, so `scripts/backup.mjs` saves `commentary`, `chiasms`, and `chiasm_units` to `backups/<timestamp>/` as JSON. `scripts/schedule-backup.sh` runs it daily at 3:00 on the owner's Mac through launchd (pass `remove` to stop it).
+
+- It uses the anon key, so `profiles`, `admins`, and `commentary_requests` aren't included. Don't add a `service_role` key to get them.
+- A new folder is written only when data changed, and nothing is ever deleted. Failures and shrinking tables raise a macOS notification and are logged to `backups/backup.log`.
+- `backups/` is gitignored and must never be committed, since the repo is public. `git clean -x` would delete it.
+- Restoring isn't automated. Don't write backup data to the live database without explicit approval.
 
 ## Conventions
 
