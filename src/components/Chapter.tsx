@@ -126,6 +126,7 @@ function Verse({
   return (
     <div
       ref={registerRef}
+      data-verse={number}
       onClick={() => onClick(number)}
       className={`p-2 rounded-lg transition-colors relative ${
         selected
@@ -418,15 +419,33 @@ export default function Chapter({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [prevLink, nextLink, isSheetOpen, isChiasmDetailsOpen, isChiasmFormOpen, router]);
 
+  // Which chiasm a click on this verse opens, if any
+  const getVerseChiasm = (number: number) =>
+    showChiasms ? verseChiasmMap.get(number)?.[0]?.chiasm ?? null : null;
+
   const onClick = async (number: number) => {
+    const verseChiasm = getVerseChiasm(number);
+
+    // Clicking the verse or chiasm whose panel is already open closes it
+    if (
+      verseChiasm
+        ? isChiasmDetailsOpen && selectedChiasm?.id === verseChiasm.id
+        : isSheetOpen && selectedVerse === number
+    ) {
+      if (verseChiasm) {
+        setIsChiasmDetailsOpen(false);
+      } else {
+        handleSheetClose();
+      }
+      return;
+    }
+
     // Always update selected verse so panel header/content can show the clicked verse
     setSelectedVerse(number);
 
-    // Check if this verse has chiasms
-    const verseChiasms = verseChiasmMap.get(number);
-    if (showChiasms && verseChiasms && verseChiasms.length > 0) {
+    if (verseChiasm) {
       // Show chiasm details for this verse
-      setSelectedChiasm(verseChiasms[0].chiasm);
+      setSelectedChiasm(verseChiasm);
       setIsChiasmDetailsOpen(true);
       setIsSheetOpen(false);
       return;
@@ -569,6 +588,24 @@ export default function Chapter({
       });
       throw error;
     }
+  };
+
+  // The panels close on any click outside them. Let onClick handle clicks on
+  // the verse or chiasm that is already open, so it closes instead of reopening.
+  const getClickedVerse = (target: EventTarget | null) => {
+    const el = target instanceof Element ? target.closest("[data-verse]") : null;
+    return el ? Number(el.getAttribute("data-verse")) : null;
+  };
+
+  const keepCommentaryOpenOnVerseClick = (e: Event) => {
+    const number = getClickedVerse(e.target);
+    if (number !== null && number === selectedVerse) e.preventDefault();
+  };
+
+  const keepChiasmOpenOnVerseClick = (e: Event) => {
+    const number = getClickedVerse(e.target);
+    if (number === null || !selectedChiasm) return;
+    if (getVerseChiasm(number)?.id === selectedChiasm.id) e.preventDefault();
   };
 
   const handleSheetClose = () => {
@@ -735,7 +772,7 @@ export default function Chapter({
         {commentary.map((comment, index) => (
           <Card
             key={comment.id}
-            className="text-muted-foreground group relative animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300"
+            className="bg-panel text-muted-foreground group relative animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300"
             style={{ animationDelay: `${index * 60}ms` }}
           >
             <CardHeader className="pb-2">
@@ -839,6 +876,7 @@ export default function Chapter({
       <ChiasmDetails
         open={isChiasmDetailsOpen}
         onOpenChange={setIsChiasmDetailsOpen}
+        onInteractOutside={keepChiasmOpenOnVerseClick}
         chiasm={selectedChiasm}
         onEdit={handleEditChiasm}
         onDelete={handleDeleteChiasm}
@@ -855,7 +893,11 @@ export default function Chapter({
         editingChiasm={editingChiasm}
       />
       <Sheet open={isSheetOpen} onOpenChange={handleSheetClose} modal={false}>
-        <SheetContent side="right" className="flex flex-col gap-4">
+        <SheetContent
+          side="right"
+          className="flex flex-col gap-4"
+          onInteractOutside={keepCommentaryOpenOnVerseClick}
+        >
           <SheetHeader className="mb-4 sticky top-0 z-10">
             <SheetTitle>Commentary</SheetTitle>
             <SheetDescription className="hidden">

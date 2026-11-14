@@ -24,6 +24,8 @@ import { Edit, Trash2 } from "lucide-react";
 interface ChiasmDetailsProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Call preventDefault to keep the panel open for a click outside it */
+  onInteractOutside?: (event: Event) => void;
   chiasm: ChiasmWithUnits | null;
   onEdit?: (chiasm: ChiasmWithUnits) => void;
   onDelete?: (chiasmId: string) => void;
@@ -32,6 +34,7 @@ interface ChiasmDetailsProps {
 export function ChiasmDetails({
   open,
   onOpenChange,
+  onInteractOutside,
   chiasm,
   onEdit,
   onDelete,
@@ -106,7 +109,11 @@ export function ChiasmDetails({
   return (
     <>
     <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
-      <SheetContent side="right" className="flex flex-col h-full">
+      <SheetContent
+        side="right"
+        className="flex flex-col h-full"
+        onInteractOutside={onInteractOutside}
+      >
         <SheetHeader className="mb-4 pb-4 border-b shrink-0">
           <SheetTitle>{chiasm.name}</SheetTitle>
           {chiasm.description && (
@@ -181,7 +188,7 @@ export function ChiasmDetails({
         </div>
 
         {isOwner && (onEdit || onDelete) && (
-          <div className="border-t pt-4 mt-4 shrink-0 bg-background sticky bottom-0">
+          <div className="border-t pt-4 mt-4 shrink-0 bg-panel sticky bottom-0">
             <div className="flex gap-2">
               {onEdit && (
                 <Button
