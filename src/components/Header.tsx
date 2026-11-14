@@ -93,7 +93,12 @@ export default function Header({
           </form>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="icon" aria-label="Settings">
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Settings"
+                className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+              >
                 <Settings2 className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
@@ -124,7 +129,10 @@ export default function Header({
           {user ? (
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="capitalize">
+                <Button
+                  variant="outline"
+                  className="capitalize data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+                >
                   {firstName || "User"}
                 </Button>
               </PopoverTrigger>
